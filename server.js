@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5001;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://sportmeet.onrender.com', // Your Render frontend URL
+    'https://socialgame-d2zq.onrender.com/', // Your Render frontend URL
     'https://your-custom-domain.com'  // If you have one
   ],
   credentials: true
