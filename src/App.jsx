@@ -204,7 +204,9 @@ const App = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showEventDetailModal, setShowEventDetailModal] = useState(false);
   const [showBugReportModal, setShowBugReportModal] = useState(false);
-  const [showBugDashboard, setShowBugDashboard] = useState(false);
+  const [showWhatsNewPage, setShowWhatsNewPage] = useState(false); // Dedicated page instead of modal
+  const [whatsNewTab, setWhatsNewTab] = useState('changelog'); // 'changelog' or 'bugs'
+  const [selectedBugImage, setSelectedBugImage] = useState(null); // For image modal
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
@@ -300,33 +302,10 @@ const App = () => {
     return emojiMap[sport] || "🎯";
   };
 
-  // FIX: Clean /index.html from URL (Render redirect issue)
-  useEffect(() => {
-    const path = window.location.pathname;
-    
-    // If URL is /index.html, clean it to /
-    if (path === '/index.html') {
-      console.log('🧹 Cleaning /index.html from URL');
-      window.history.replaceState({}, '', '/');
-    }
-  }, []);
-
   // Check if user needs to complete profile - SHOW EVERY LOGIN
-  // BUT NOT if we're opening a shared event link
   useEffect(() => {
     if (currentUser && !currentUser.profileComplete) {
-      // Check if there's a pending event link
-      let path = window.location.pathname;
-      if (path === '/index.html') {
-        path = window.location.hash.replace('#', '') || '/';
-      }
-      const hasPendingEvent = path.match(/\/event\/([a-zA-Z0-9]+)/) || 
-                             sessionStorage.getItem('pendingEventId');
-      
-      // Only show profile prompt if NOT opening an event
-      if (!hasPendingEvent) {
-        setShowProfilePrompt(true);
-      }
+      setShowProfilePrompt(true);
     }
   }, [currentUser]);
 
@@ -351,63 +330,40 @@ const App = () => {
 
   // Handle shared event links - open event modal from URL
   useEffect(() => {
-    // Get path and clean any /index.html
-    let path = window.location.pathname;
-    if (path === '/index.html') {
-      path = window.location.hash.replace('#', '') || '/';
-    }
-    
-    // Also check search params in case event ID is there
-    const urlParams = new URLSearchParams(window.location.search);
-    const eventIdFromParam = urlParams.get('event');
-    
-    // Try to match event ID from path
+    const path = window.location.pathname;
     const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
-    const eventId = eventIdMatch ? eventIdMatch[1] : eventIdFromParam;
     
-    if (eventId) {
-      console.log('🔗 Shared link detected:', eventId);
+    if (eventIdMatch) {
+      const eventId = eventIdMatch[1];
       
       if (token && events.length > 0) {
         // User is logged in, find and open event
         const event = events.find(e => e._id === eventId);
         
         if (event) {
-          console.log('✅ Event found, opening modal:', event.title);
           setSelectedEvent(event);
           setShowEventDetailModal(true);
-          // Clean URL without reload - delay slightly
-          setTimeout(() => {
-            window.history.replaceState({}, '', '/');
-          }, 100);
-        } else {
-          console.log('❌ Event not found with ID:', eventId);
+          // Clean URL without reload
+          window.history.replaceState({}, '', '/');
         }
       } else if (!token) {
         // User not logged in, store event ID for after login
-        console.log('🔒 Not logged in, storing event ID for later');
         sessionStorage.setItem('pendingEventId', eventId);
       }
     }
-  }, [token, events, showEventDetailModal]);
+  }, [token, events]);
 
   // Open pending event after login
   useEffect(() => {
     if (token && events.length > 0) {
       const pendingEventId = sessionStorage.getItem('pendingEventId');
       if (pendingEventId) {
-        console.log('🔓 Logged in, opening pending event:', pendingEventId);
         const event = events.find(e => e._id === pendingEventId);
         if (event) {
-          console.log('✅ Opening event:', event.title);
           setSelectedEvent(event);
           setShowEventDetailModal(true);
           sessionStorage.removeItem('pendingEventId');
-          setTimeout(() => {
-            window.history.replaceState({}, '', '/');
-          }, 100);
-        } else {
-          console.log('❌ Pending event not found:', pendingEventId);
+          window.history.replaceState({}, '', '/');
         }
       }
     }
@@ -1434,14 +1390,17 @@ if (!token) {
 
             <div className="flex gap-2 items-center">
               <button
-                onClick={() => setShowBugDashboard(true)}
-                className="bg-blue-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-blue-600 transition-all flex items-center gap-2"
-                title="View All Bugs"
+                onClick={() => {
+                  setShowWhatsNewPage(true);
+                  setWhatsNewTab('changelog');
+                }}
+                className="bg-green-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-green-600 transition-all flex items-center gap-2"
+                title="What's New & Changelog"
               >
-                <Bug size={20} />
-                <span className="hidden md:inline">Bugs ({bugs.length})</span>
+                <span className="text-lg">✨</span>
+                <span className="hidden md:inline">What's New</span>
               </button>
-
+              
               <button
                 onClick={() => setShowBugReportModal(true)}
                 className="bg-orange-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
@@ -2541,186 +2500,485 @@ if (!token) {
         </div>
       )}
 
-      {/* Bug Dashboard Modal */}
-      {showBugDashboard && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8">
-            <div className="sticky top-0 bg-white border-b p-6 z-10">
+      {/* What's New & Bugs Page - Full Screen */}
+      {showWhatsNewPage && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg z-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  🐛 Bug Reports ({bugs.length})
-                </h2>
+                <div className="flex items-center gap-4">
+                  <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+                    ✨ What's New
+                  </h1>
+                </div>
                 <button
-                  onClick={() => setShowBugDashboard(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  onClick={() => setShowWhatsNewPage(false)}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
                 >
                   <X size={24} />
                 </button>
               </div>
+              
+              {/* Tabs */}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setWhatsNewTab('changelog')}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                    whatsNewTab === 'changelog'
+                      ? 'bg-white text-green-600'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  📝 Changelog
+                </button>
+                <button
+                  onClick={() => setWhatsNewTab('bugs')}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                    whatsNewTab === 'bugs'
+                      ? 'bg-white text-blue-600'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  🐛 Bugs ({bugs.length})
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Pending Bugs */}
+          {/* Content */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            {whatsNewTab === 'changelog' ? (
+              /* CHANGELOG TAB */
+              <div className="space-y-8">
                 <div>
-                  <h3 className="font-bold text-lg mb-3 text-orange-600 flex items-center gap-2">
-                    <span className="bg-orange-100 px-3 py-1 rounded-full text-sm">
-                      Pending ({bugs.filter(b => b.status === 'pending').length})
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {bugs.filter(b => b.status === 'pending').map((bug) => (
-                      <div
-                        key={bug._id}
-                        className="bg-orange-50 border border-orange-200 rounded-xl p-4"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-2">
-                          {bug.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {bug.description}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                          <span>{bug.userName || 'Anonymous'}</span>
-                          <span>•</span>
-                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        {bug.screenshots && bug.screenshots.length > 0 && (
-                          <div className="flex gap-2 mb-3">
-                            {bug.screenshots.map((screenshot, idx) => (
-                              <img
-                                key={idx}
-                                src={screenshot}
-                                alt="Bug screenshot"
-                                className="w-16 h-16 object-cover rounded border"
-                              />
-                            ))}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleBugStatusChange(bug._id, 'working')}
-                          className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                        >
-                          Mark as In Progress
-                        </button>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">Recent Updates</h2>
+                  
+                  <div className="space-y-6">
+                    {/* Latest Version */}
+                    <div className="border-l-4 border-green-500 bg-green-50 rounded-r-xl p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                        <h3 className="text-2xl font-bold text-gray-800">v2.5.0 - Major Updates</h3>
+                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">{new Date().toLocaleDateString()}</span>
                       </div>
-                    ))}
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Shared Event Links:</strong> Share events with direct links that open automatically for logged-in users
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Profile Completion:</strong> Add your location and sport interests for personalized event recommendations
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Multi-Step Signup:</strong> Streamlined registration process with optional profile information
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Bug Tracking System:</strong> Report bugs with screenshots and track their status in real-time
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Attendee Count Display:</strong> Always see event capacity (e.g., "0 / 20 attending")
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Responsive Design:</strong> All modals and pages work perfectly on screens as small as 320px
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Improved Event Detail:</strong> Redesigned event modal with better image gallery and clearer layout
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>What's New Page:</strong> Dedicated page for changelog and bug tracking (you're here!)
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Previous Version */}
+                    <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-xl p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                        <h3 className="text-2xl font-bold text-gray-800">v2.0.0 - Core Features</h3>
+                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">January 2026</span>
+                      </div>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Event Creation:</strong> Create and manage sports events with multiple images
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Registration System:</strong> Register and unregister for events with capacity limits
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Google Maps Integration:</strong> Location autocomplete and interactive map display
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Image Upload:</strong> Multiple images per event with Cloudinary hosting
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <div>
+                            <strong>Sport Filtering:</strong> Filter events by sport type and search by keywords
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Future Plans */}
+                    <div className="border-l-4 border-purple-500 bg-purple-50 rounded-r-xl p-6">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-4">🚀 Coming Soon</h3>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-3">
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <div>
+                            <strong>Event Chat:</strong> Real-time messaging for event attendees
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <div>
+                            <strong>Notifications:</strong> Get notified about event updates and new events nearby
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <div>
+                            <strong>User Profiles:</strong> Public profiles with event history and ratings
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
-                {/* In Progress Bugs */}
-                <div>
-                  <h3 className="font-bold text-lg mb-3 text-blue-600 flex items-center gap-2">
-                    <span className="bg-blue-100 px-3 py-1 rounded-full text-sm">
-                      In Progress ({bugs.filter(b => b.status === 'working').length})
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {bugs.filter(b => b.status === 'working').map((bug) => (
-                      <div
-                        key={bug._id}
-                        className="bg-blue-50 border border-blue-200 rounded-xl p-4"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-2">
-                          {bug.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {bug.description}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                          <span>{bug.userName || 'Anonymous'}</span>
-                          <span>•</span>
-                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        {bug.screenshots && bug.screenshots.length > 0 && (
-                          <div className="flex gap-2 mb-3">
-                            {bug.screenshots.map((screenshot, idx) => (
-                              <img
-                                key={idx}
-                                src={screenshot}
-                                alt="Bug screenshot"
-                                className="w-16 h-16 object-cover rounded border"
-                              />
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleBugStatusChange(bug._id, 'pending')}
-                            className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
-                          >
-                            Back to Pending
-                          </button>
-                          <button
-                            onClick={() => handleBugStatusChange(bug._id, 'resolved')}
-                            className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
-                          >
-                            Mark Resolved
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Resolved Bugs */}
-                <div>
-                  <h3 className="font-bold text-lg mb-3 text-green-600 flex items-center gap-2">
-                    <span className="bg-green-100 px-3 py-1 rounded-full text-sm">
-                      Resolved ({bugs.filter(b => b.status === 'resolved').length})
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {bugs.filter(b => b.status === 'resolved').map((bug) => (
-                      <div
-                        key={bug._id}
-                        className="bg-green-50 border border-green-200 rounded-xl p-4"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-2">
-                          {bug.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {bug.description}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                          <span>{bug.userName || 'Anonymous'}</span>
-                          <span>•</span>
-                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        {bug.screenshots && bug.screenshots.length > 0 && (
-                          <div className="flex gap-2 mb-3">
-                            {bug.screenshots.map((screenshot, idx) => (
-                              <img
-                                key={idx}
-                                src={screenshot}
-                                alt="Bug screenshot"
-                                className="w-16 h-16 object-cover rounded border"
-                              />
-                            ))}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleBugStatusChange(bug._id, 'working')}
-                          className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                        >
-                          Reopen
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                {/* Footer CTA */}
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Have Feedback?</h3>
+                  <p className="text-gray-700 mb-4">
+                    We're constantly improving SportMeet based on your feedback. Found a bug or have a feature request? Let us know!
+                  </p>
+                  <button
+                    onClick={() => setShowBugReportModal(true)}
+                    className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
+                  >
+                    <Bug size={20} />
+                    Report a Bug
+                  </button>
                 </div>
               </div>
-
-              {bugs.length === 0 && (
-                <div className="text-center py-12">
-                  <Bug size={64} className="mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500 text-lg">No bugs reported yet!</p>
-                  <p className="text-gray-400 text-sm mt-2">
-                    When users report bugs, they'll appear here.
-                  </p>
+            ) : (
+              /* BUGS TAB */
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-3xl font-bold text-gray-800">Bug Reports</h2>
+                  <button
+                    onClick={() => setShowBugReportModal(true)}
+                    className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
+                  >
+                    <Bug size={18} />
+                    Report New Bug
+                  </button>
                 </div>
-              )}
-            </div>
+
+                {bugs.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Pending Column */}
+                    <div>
+                      <div className="bg-orange-100 rounded-lg p-3 mb-4">
+                        <h3 className="font-bold text-lg text-orange-800 flex items-center gap-2">
+                          📋 Pending
+                          <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm">
+                            {bugs.filter(b => b.status === 'pending').length}
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="space-y-4">
+                        {bugs.filter(b => b.status === 'pending').map((bug) => (
+                          <div
+                            key={bug._id}
+                            className="bg-white border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                          >
+                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                              {bug.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">
+                              {bug.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
+                              <span>•</span>
+                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            
+                            {/* Screenshots */}
+                            {bug.screenshots && bug.screenshots.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold text-gray-700 mb-2">
+                                  Screenshots ({bug.screenshots.length}):
+                                </p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {bug.screenshots.map((screenshot, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => setSelectedBugImage(screenshot)}
+                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-orange-500 transition-all group relative"
+                                    >
+                                      <img
+                                        src={screenshot}
+                                        alt={`Screenshot ${idx + 1}`}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
+                                          View
+                                        </span>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => handleBugStatusChange(bug._id, 'working')}
+                              className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                            >
+                              🔨 Start Working
+                            </button>
+                          </div>
+                        ))}
+                        {bugs.filter(b => b.status === 'pending').length === 0 && (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No pending bugs</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* In Progress Column */}
+                    <div>
+                      <div className="bg-blue-100 rounded-lg p-3 mb-4">
+                        <h3 className="font-bold text-lg text-blue-800 flex items-center gap-2">
+                          🔨 In Progress
+                          <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-sm">
+                            {bugs.filter(b => b.status === 'working').length}
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="space-y-4">
+                        {bugs.filter(b => b.status === 'working').map((bug) => (
+                          <div
+                            key={bug._id}
+                            className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                          >
+                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                              {bug.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">
+                              {bug.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
+                              <span>•</span>
+                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            
+                            {/* Screenshots */}
+                            {bug.screenshots && bug.screenshots.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold text-gray-700 mb-2">
+                                  Screenshots ({bug.screenshots.length}):
+                                </p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {bug.screenshots.map((screenshot, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => setSelectedBugImage(screenshot)}
+                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-blue-500 transition-all group relative"
+                                    >
+                                      <img
+                                        src={screenshot}
+                                        alt={`Screenshot ${idx + 1}`}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
+                                          View
+                                        </span>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleBugStatusChange(bug._id, 'pending')}
+                                className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
+                              >
+                                ⬅️ Back
+                              </button>
+                              <button
+                                onClick={() => handleBugStatusChange(bug._id, 'resolved')}
+                                className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
+                              >
+                                ✅ Resolve
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {bugs.filter(b => b.status === 'working').length === 0 && (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No bugs in progress</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Resolved Column */}
+                    <div>
+                      <div className="bg-green-100 rounded-lg p-3 mb-4">
+                        <h3 className="font-bold text-lg text-green-800 flex items-center gap-2">
+                          ✅ Resolved
+                          <span className="bg-green-500 text-white px-2 py-1 rounded-full text-sm">
+                            {bugs.filter(b => b.status === 'resolved').length}
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="space-y-4">
+                        {bugs.filter(b => b.status === 'resolved').map((bug) => (
+                          <div
+                            key={bug._id}
+                            className="bg-white border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-shadow opacity-75"
+                          >
+                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                              {bug.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                              {bug.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
+                              <span>•</span>
+                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            
+                            {/* Screenshots */}
+                            {bug.screenshots && bug.screenshots.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold text-gray-700 mb-2">
+                                  Screenshots ({bug.screenshots.length}):
+                                </p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {bug.screenshots.map((screenshot, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => setSelectedBugImage(screenshot)}
+                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-green-500 transition-all group relative"
+                                    >
+                                      <img
+                                        src={screenshot}
+                                        alt={`Screenshot ${idx + 1}`}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
+                                          View
+                                        </span>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => handleBugStatusChange(bug._id, 'working')}
+                              className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                            >
+                              🔄 Reopen
+                            </button>
+                          </div>
+                        ))}
+                        {bugs.filter(b => b.status === 'resolved').length === 0 && (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No resolved bugs yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-16">
+                    <Bug size={80} className="mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-2xl font-bold text-gray-600 mb-2">No Bugs Reported</h3>
+                    <p className="text-gray-500 mb-6">
+                      When users report bugs, they'll appear here for tracking.
+                    </p>
+                    <button
+                      onClick={() => setShowBugReportModal(true)}
+                      className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-all inline-flex items-center gap-2"
+                    >
+                      <Bug size={20} />
+                      Report First Bug
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bug Image Modal */}
+      {selectedBugImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4"
+          onClick={() => setSelectedBugImage(null)}
+        >
+          <div className="relative max-w-5xl w-full">
+            <button
+              onClick={() => setSelectedBugImage(null)}
+              className="absolute -top-12 right-0 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+            >
+              <X size={24} className="text-white" />
+            </button>
+            <img
+              src={selectedBugImage}
+              alt="Bug screenshot full size"
+              className="w-full h-auto rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}
