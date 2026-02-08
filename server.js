@@ -19,12 +19,13 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "https://socialgame-d2zq.onrender.com",
+      "https://socialgame-api.onrender.com/api",
       "https://socialgame-api.onrender.com",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.use(express.json({ limit: "50mb" }));
@@ -39,9 +40,7 @@ cloudinary.config({
 
 // MongoDB Connection
 mongoose
-  .connect(
-    process.env.MONGODB_URI || "mongodb://localhost:27017/social-events"
-  )
+  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/social-events")
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
@@ -211,7 +210,7 @@ const authenticateToken = (req, res, next) => {
       }
       req.user = user;
       next();
-    }
+    },
   );
 };
 
@@ -227,7 +226,7 @@ const optionalAuth = (req, res, next) => {
         if (!err) {
           req.user = user;
         }
-      }
+      },
     );
   }
   next();
@@ -237,7 +236,9 @@ const optionalAuth = (req, res, next) => {
 const deleteExpiredEvents = async () => {
   try {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const result = await Event.deleteMany({ time: { $lt: twentyFourHoursAgo } });
+    const result = await Event.deleteMany({
+      time: { $lt: twentyFourHoursAgo },
+    });
     if (result.deletedCount > 0) {
       console.log(`🗑️  Deleted ${result.deletedCount} expired events`);
     }
@@ -253,31 +254,36 @@ deleteExpiredEvents();
 
 // ==================== IMAGE UPLOAD ROUTES ====================
 
-app.post("/api/upload", authenticateToken, upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+app.post(
+  "/api/upload",
+  authenticateToken,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "sportmeet",
+        resource_type: "auto",
+      });
+
+      res.json({
+        url: result.secure_url,
+        publicId: result.public_id,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res
+        .status(500)
+        .json({ message: "Failed to upload image", error: error.message });
     }
-
-    const b64 = Buffer.from(req.file.buffer).toString("base64");
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: "sportmeet",
-      resource_type: "auto",
-    });
-
-    res.json({
-      url: result.secure_url,
-      publicId: result.public_id,
-    });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to upload image", error: error.message });
-  }
-});
+  },
+);
 
 app.post(
   "/api/upload-multiple",
@@ -314,7 +320,7 @@ app.post(
         .status(500)
         .json({ message: "Failed to upload images", error: error.message });
     }
-  }
+  },
 );
 
 // ==================== AUTH ROUTES ====================
@@ -349,7 +355,7 @@ app.post("/api/auth/register", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       process.env.JWT_SECRET || "your-secret-key-change-this",
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.status(201).json({
@@ -394,7 +400,7 @@ app.post("/api/auth/login", async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       process.env.JWT_SECRET || "your-secret-key-change-this",
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.json({
@@ -462,7 +468,7 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { name, bio, avatar, favoriteSports },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).select("-password");
 
     res.json(user);
@@ -519,8 +525,10 @@ app.post("/api/events", authenticateToken, async (req, res) => {
       $push: { createdEvents: savedEvent._id },
     });
 
-    const populatedEvent = await Event.findById(savedEvent._id)
-      .populate("creator", "username name avatar");
+    const populatedEvent = await Event.findById(savedEvent._id).populate(
+      "creator",
+      "username name avatar",
+    );
 
     res.status(201).json(populatedEvent);
   } catch (error) {
@@ -552,7 +560,7 @@ app.put("/api/events/:id", authenticateToken, async (req, res) => {
     const updatedEvent = await Event.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
       .populate("creator", "username name avatar")
       .populate("attendees", "username name avatar");
@@ -588,7 +596,7 @@ app.delete("/api/events/:id", authenticateToken, async (req, res) => {
     // Remove from all attendees' registered events
     await User.updateMany(
       { registeredEvents: req.params.id },
-      { $pull: { registeredEvents: req.params.id } }
+      { $pull: { registeredEvents: req.params.id } },
     );
 
     res.json({ message: "Event deleted successfully" });
@@ -641,7 +649,7 @@ app.post("/api/events/:id/unregister", authenticateToken, async (req, res) => {
     }
 
     event.attendees = event.attendees.filter(
-      (attendee) => attendee.toString() !== req.user.userId
+      (attendee) => attendee.toString() !== req.user.userId,
     );
     await event.save();
 

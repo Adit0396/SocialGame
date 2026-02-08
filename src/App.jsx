@@ -18,6 +18,7 @@ import {
   Send,
   CheckCircle,
   ChevronDown,
+  Share2,
 } from "lucide-react";
 
 const API_URL =
@@ -221,6 +222,7 @@ const App = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
   
   const profileDropdownRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -286,6 +288,26 @@ const App = () => {
       setLoading(false);
     }
   }, [token]);
+
+  // Handle shared event links - open event modal from URL
+  useEffect(() => {
+    if (token && events.length > 0) {
+      const path = window.location.pathname;
+      const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
+      
+      if (eventIdMatch) {
+        const eventId = eventIdMatch[1];
+        const event = events.find(e => e._id === eventId);
+        
+        if (event) {
+          setSelectedEvent(event);
+          setShowEventDetailModal(true);
+          // Clean URL without reload
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    }
+  }, [token, events]);
 
   useEffect(() => {
     let filtered = events;
@@ -823,6 +845,35 @@ const App = () => {
     setShowBugReportModal(false);
   };
 
+  const handleShareEvent = async (eventId, eventTitle) => {
+    const shareUrl = `${window.location.origin}/event/${eventId}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast("Link copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast("Link copied to clipboard!");
+      } catch (err2) {
+        console.error("Fallback copy failed:", err2);
+        showToast("Failed to copy link");
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const openProfileEditor = () => {
     setProfileFormData({
       name: currentUser.name || "",
@@ -1147,22 +1198,34 @@ const App = () => {
                 </div>
 
                 <div className="p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="text-xl font-bold text-gray-800 line-clamp-2 flex-1">
                       {event.title}
                     </h3>
-                    {isEventCreator(event) && (
+                    <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteEvent(event._id);
+                          handleShareEvent(event._id, event.title);
                         }}
-                        className="flex-shrink-0 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
-                        title="Delete Event"
+                        className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all"
+                        title="Share event"
                       >
-                        <Trash2 size={16} />
+                        <Share2 size={16} />
                       </button>
-                    )}
+                      {isEventCreator(event) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteEvent(event._id);
+                          }}
+                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                          title="Delete Event"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {event.description}
@@ -1421,11 +1484,22 @@ const App = () => {
                 </div>
               </div>
 
+              {/* Share button - visible for everyone */}
+              <div className="mb-4">
+                <button
+                  onClick={() => handleShareEvent(selectedEvent._id, selectedEvent.title)}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <Share2 size={18} />
+                  Share Event Link
+                </button>
+              </div>
+
               {isEventCreator(selectedEvent) && (
                 <div className="mb-4 flex gap-2">
                   <button
                     onClick={() => handleEditEvent(selectedEvent)}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
                   >
                     <Edit size={18} />
                     Edit Event
@@ -1916,6 +1990,22 @@ const App = () => {
                 Yes, Unregister
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[320px] animate-bounce-in">
+            <CheckCircle size={24} className="flex-shrink-0" />
+            <span className="font-semibold flex-1">{toast}</span>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 hover:bg-green-700 rounded-full transition-colors"
+            >
+              <X size={18} />
+            </button>
           </div>
         </div>
       )}
