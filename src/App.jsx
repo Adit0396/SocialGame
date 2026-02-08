@@ -102,32 +102,25 @@ const ImageCarousel = ({ images }) => {
 // Google Places Autocomplete Component
 const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
   const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
 
   useEffect(() => {
-    if (!window.google || !inputRef.current) return;
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(
+    if (!window.google) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
       inputRef.current,
-      { types: ["geocode", "establishment"] },
+      { types: ['geocode'] }
     );
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current.getPlace();
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
       if (place.geometry) {
-        const location = {
-          address: place.formatted_address || place.name,
+        onPlaceSelect({
+          address: place.formatted_address,
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
-        };
-        onPlaceSelect(location);
+        });
       }
     });
-    return () => {
-      if (autocompleteRef.current) {
-        window.google.maps.event.clearInstanceListeners(
-          autocompleteRef.current,
-        );
-      }
-    };
   }, [onPlaceSelect]);
 
   return (
@@ -137,7 +130,7 @@ const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-      placeholder="Start typing an address..."
+      placeholder="Enter location"
     />
   );
 };
