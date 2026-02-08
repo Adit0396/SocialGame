@@ -1,6 +1,98 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MapPin, Calendar, DollarSign, Plus, X, Search, User, LogOut, LogIn, Users, Camera, Map } from 'lucide-react';
-import { API_URL } from './config';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Heart,
+  MapPin,
+  Calendar,
+  DollarSign,
+  Plus,
+  X,
+  Search,
+  LogOut,
+  Users,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Trash2,
+  Bug,
+  Send,
+  CheckCircle,
+  ChevronDown,
+} from "lucide-react";
+
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://socialgame-api.onrender.com/api";
+
+// Image Carousel Component
+const ImageCarousel = ({ images }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [images]);
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+        <span className="text-gray-400">No image</span>
+      </div>
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <img src={images[0]} alt="Event" className="w-full h-full object-cover" />
+    );
+  }
+
+  const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () =>
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  return (
+    <div className="relative w-full h-full group">
+      <img
+        src={images[currentIndex]}
+        alt={`Event ${currentIndex + 1}`}
+        className="w-full h-full object-cover"
+      />
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          prevImage();
+        }}
+        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          nextImage();
+        }}
+        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+      >
+        <ChevronRight size={20} />
+      </button>
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentIndex(index);
+            }}
+            className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? "bg-white w-4" : "bg-white/50"}`}
+          />
+        ))}
+      </div>
+      <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </div>
+  );
+};
 
 // Google Places Autocomplete Component
 const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
@@ -9,27 +101,26 @@ const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
 
   useEffect(() => {
     if (!window.google || !inputRef.current) return;
-
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      types: ['geocode', 'establishment']
-    });
-
-    autocompleteRef.current.addListener('place_changed', () => {
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      { types: ["geocode", "establishment"] },
+    );
+    autocompleteRef.current.addListener("place_changed", () => {
       const place = autocompleteRef.current.getPlace();
-      
       if (place.geometry) {
         const location = {
           address: place.formatted_address || place.name,
           lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
+          lng: place.geometry.location.lng(),
         };
         onPlaceSelect(location);
       }
     });
-
     return () => {
       if (autocompleteRef.current) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        window.google.maps.event.clearInstanceListeners(
+          autocompleteRef.current,
+        );
       }
     };
   }, [onPlaceSelect]);
@@ -56,11 +147,10 @@ const GoogleMap = ({ location, coordinates }) => {
         center: { lat: coordinates.lat, lng: coordinates.lng },
         zoom: 15,
       });
-
       new window.google.maps.Marker({
         position: { lat: coordinates.lat, lng: coordinates.lng },
         map: map,
-        title: location
+        title: location,
       });
     }
   }, [coordinates, location]);
@@ -77,7 +167,7 @@ const GoogleMap = ({ location, coordinates }) => {
   return <div ref={mapRef} className="w-full h-48 rounded-lg" />;
 };
 
-// Mini Map Preview in Create Event Modal
+// Mini Map Preview
 const MiniMapPreview = ({ coordinates }) => {
   const mapRef = useRef(null);
 
@@ -87,7 +177,6 @@ const MiniMapPreview = ({ coordinates }) => {
         center: { lat: coordinates.lat, lng: coordinates.lng },
         zoom: 14,
       });
-
       new window.google.maps.Marker({
         position: { lat: coordinates.lat, lng: coordinates.lng },
         map: map,
@@ -95,14 +184,17 @@ const MiniMapPreview = ({ coordinates }) => {
     }
   }, [coordinates]);
 
-  if (!coordinates) {
-    return null;
-  }
+  if (!coordinates) return null;
 
   return (
     <div className="mt-3">
-      <p className="text-sm font-semibold text-gray-700 mb-2">Location Preview</p>
-      <div ref={mapRef} className="w-full h-32 rounded-lg border-2 border-purple-200" />
+      <p className="text-sm font-semibold text-gray-700 mb-2">
+        Location Preview
+      </p>
+      <div
+        ref={mapRef}
+        className="w-full h-32 rounded-lg border-2 border-purple-200"
+      />
     </div>
   );
 };
@@ -111,53 +203,76 @@ const App = () => {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showEventDetailModal, setShowEventDetailModal] = useState(false);
+  const [showBugReportModal, setShowBugReportModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showUnregisterModal, setShowUnregisterModal] = useState(false);
+  const [eventToUnregister, setEventToUnregister] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [authMode, setAuthMode] = useState('login');
+  const [authMode, setAuthMode] = useState("login");
   const [likedEvents, setLikedEvents] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSport, setSelectedSport] = useState('All');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSport, setSelectedSport] = useState("All");
   const [currentUser, setCurrentUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const profileDropdownRef = useRef(null);
   const [formData, setFormData] = useState({
-    title: '',
-    location: '',
-    cost: '',
-    time: '',
-    sportType: '',
+    title: "",
+    location: "",
+    cost: "",
+    time: "",
+    sportType: "",
     images: [],
-    description: '',
-    maxAttendees: '',
-    coordinates: null
+    description: "",
+    maxAttendees: "",
+    coordinates: null,
   });
-  
+
   const [authFormData, setAuthFormData] = useState({
-    email: '',
-    password: '',
-    username: '',
-    name: ''
+    email: "",
+    password: "",
+    username: "",
+    name: "",
   });
-  
+
   const [profileFormData, setProfileFormData] = useState({
-    name: '',
-    bio: '',
-    avatar: '',
-    favoriteSports: []
+    name: "",
+    bio: "",
+    avatar: "",
+    favoriteSports: [],
   });
 
-  const sportTypes = ['All', 'Volleyball', 'Basketball', 'Soccer', 'Tennis', 'Yoga', 'Running', 'Cycling', 'Swimming', 'Other'];
+  const [bugReportData, setBugReportData] = useState({
+    title: "",
+    description: "",
+    screenshots: [],
+  });
 
-  // Load Google Maps
+  const sportTypes = [
+    "All",
+    "My Events",
+    "Volleyball",
+    "Basketball",
+    "Soccer",
+    "Tennis",
+    "Yoga",
+    "Running",
+    "Cycling",
+    "Swimming",
+    "Other",
+  ];
+
   useEffect(() => {
     if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&libraries=places`;
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}&libraries=places`;
       script.async = true;
       document.head.appendChild(script);
     }
@@ -166,59 +281,76 @@ const App = () => {
   useEffect(() => {
     if (token) {
       fetchCurrentUser();
+      fetchEvents();
+    } else {
+      setLoading(false);
     }
-    fetchEvents();
   }, [token]);
 
   useEffect(() => {
     let filtered = events;
-
-    if (selectedSport !== 'All') {
-      filtered = filtered.filter(event => event.sportType === selectedSport);
+    
+    // Filter by "My Events" (registered events)
+    if (selectedSport === "My Events" && currentUser) {
+      filtered = filtered.filter((event) =>
+        event.attendees?.some((a) => a._id === currentUser._id)
+      );
+    } else if (selectedSport !== "All" && selectedSport !== "My Events") {
+      filtered = filtered.filter((event) => event.sportType === selectedSport);
     }
-
+    
     if (searchQuery) {
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (event) =>
+          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
-
     setFilteredEvents(filtered);
-  }, [events, searchQuery, selectedSport]);
+  }, [events, searchQuery, selectedSport, currentUser]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchCurrentUser = async () => {
     try {
       const response = await fetch(`${API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       if (response.ok) {
         const user = await response.json();
         setCurrentUser(user);
       } else {
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         setToken(null);
         setCurrentUser(null);
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error("Error fetching user:", error);
     }
   };
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await fetch(`${API_URL}/events`, { headers });
+      const response = await fetch(`${API_URL}/events`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await response.json();
       setEvents(data);
       setFilteredEvents(data);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error("Error fetching events:", error);
     } finally {
       setLoading(false);
     }
@@ -226,55 +358,80 @@ const App = () => {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    const endpoint = authMode === 'login' ? 'login' : 'register';
-    
+    e.stopPropagation();
+
+    const endpoint = authMode === "login" ? "login" : "register";
+    setIsSubmitting(true);
+
     try {
       const response = await fetch(`${API_URL}/auth/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(authFormData)
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(authFormData),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setCurrentUser(data.user);
-        setShowAuthModal(false);
-        setAuthFormData({ email: '', password: '', username: '', name: '' });
-        fetchEvents();
-      } else {
-        alert(data.message || 'Authentication failed');
+      if (!response.ok) {
+        throw new Error(data.message || "Authentication failed");
       }
+      localStorage.setItem("token", data.token);
+
+      setToken(data.token);
+      setCurrentUser(data.user);
+
+      setAuthFormData({
+        email: "",
+        password: "",
+        username: "",
+        name: "",
+      });
+
+      const eventsResponse = await fetch(`${API_URL}/events`, {
+        headers: {
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+
+      if (!eventsResponse.ok) {
+        throw new Error("Failed to fetch events");
+      }
+
+      const eventsData = await eventsResponse.json();
+      setEvents(eventsData);
+      setFilteredEvents(eventsData);
     } catch (error) {
-      console.error('Auth error:', error);
-      alert('Authentication failed. Please try again.');
+      console.error("Auth error:", error);
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setToken(null);
     setCurrentUser(null);
-    fetchEvents();
+    setEvents([]);
+    setFilteredEvents([]);
   };
 
   const handleLike = async (eventId) => {
     const newLiked = new Set(likedEvents);
     const isLiked = newLiked.has(eventId);
-    
+
     try {
       const response = await fetch(`${API_URL}/events/${eventId}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ increment: !isLiked })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ increment: !isLiked }),
       });
 
       if (response.ok) {
         const updatedEvent = await response.json();
-        setEvents(events.map(e => e._id === eventId ? updatedEvent : e));
-        
+        setEvents(events.map((e) => (e._id === eventId ? updatedEvent : e)));
         if (isLiked) {
           newLiked.delete(eventId);
         } else {
@@ -283,65 +440,100 @@ const App = () => {
         setLikedEvents(newLiked);
       }
     } catch (error) {
-      console.error('Error liking event:', error);
+      console.error("Error liking event:", error);
     }
   };
 
   const handleRegisterForEvent = async (eventId) => {
     if (!token) {
-      alert('Please login to register for events');
-      setShowAuthModal(true);
+      alert("Please login to register for events");
       return;
     }
 
     try {
       const response = await fetch(`${API_URL}/events/${eventId}/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-
       const data = await response.json();
 
       if (response.ok) {
-        setEvents(events.map(e => e._id === eventId ? data : e));
+        setEvents(events.map((e) => (e._id === eventId ? data : e)));
         if (selectedEvent && selectedEvent._id === eventId) {
           setSelectedEvent(data);
         }
-        alert('Successfully registered for event!');
+        alert("Successfully registered for event!");
       } else {
-        alert(data.message || 'Failed to register');
+        alert(data.message || "Failed to register");
       }
     } catch (error) {
-      console.error('Error registering:', error);
-      alert('Failed to register for event');
+      console.error("Error registering:", error);
+      alert("Failed to register for event");
+    }
+  };
+
+  const handleUnregisterForEvent = async (eventId) => {
+    try {
+      const response = await fetch(`${API_URL}/events/${eventId}/unregister`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setEvents(events.map((e) => (e._id === eventId ? data : e)));
+        if (selectedEvent && selectedEvent._id === eventId) {
+          setSelectedEvent(data);
+        }
+        setShowUnregisterModal(false);
+        setEventToUnregister(null);
+        alert("Successfully unregistered from event!");
+      } else {
+        alert(data.message || "Failed to unregister");
+      }
+    } catch (error) {
+      console.error("Error unregistering:", error);
+      alert("Failed to unregister from event");
+    }
+  };
+
+  const openUnregisterModal = (event) => {
+    setEventToUnregister(event);
+    setShowUnregisterModal(true);
+  };
+
+  const confirmUnregister = () => {
+    if (eventToUnregister) {
+      handleUnregisterForEvent(eventToUnregister._id);
     }
   };
 
   const handleImageUpload = async (file) => {
     const formDataUpload = new FormData();
-    formDataUpload.append('image', file);
+    formDataUpload.append("image", file);
 
     try {
       const response = await fetch(`${API_URL}/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataUpload
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataUpload,
       });
 
       if (response.ok) {
         const data = await response.json();
         return data.url;
       } else {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload image');
+      console.error("Upload error:", error);
+      alert("Failed to upload image");
       return null;
     }
   };
@@ -362,39 +554,85 @@ const App = () => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    const remainingSlots = 5 - formData.images.length;
+    if (files.length > remainingSlots) {
+      alert(
+        `You can only upload ${remainingSlots} more image(s). Maximum is 5 images total.`,
+      );
+      return;
+    }
+
     setUploadingImages(true);
-    
-    // Upload images using the correct endpoint
+
     const formDataUpload = new FormData();
-    files.forEach(file => {
-      formDataUpload.append('eventImages', file);
+    files.forEach((file) => {
+      formDataUpload.append("eventImages", file);
     });
 
     try {
       const response = await fetch(`${API_URL}/upload-multiple`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataUpload
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataUpload,
       });
 
       if (response.ok) {
         const results = await response.json();
-        const urls = results.map(r => r.url);
+        const urls = results.map((r) => r.url);
         setFormData({
           ...formData,
-          images: [...formData.images, ...urls]
+          images: [...formData.images, ...urls].slice(0, 5),
         });
       } else {
-        alert('Failed to upload images');
+        const error = await response.json();
+        alert(error.message || "Failed to upload images");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload images');
+      console.error("Upload error:", error);
+      alert("Failed to upload images");
     }
 
     setUploadingImages(false);
+  };
+
+  const handleBugScreenshotUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const remainingSlots = 3 - bugReportData.screenshots.length;
+    if (files.length > remainingSlots) {
+      alert(
+        `You can only upload ${remainingSlots} more screenshot(s). Maximum is 3 screenshots total.`,
+      );
+      return;
+    }
+
+    const formDataUpload = new FormData();
+    files.forEach((file) => {
+      formDataUpload.append("eventImages", file);
+    });
+
+    try {
+      const response = await fetch(`${API_URL}/upload-multiple`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataUpload,
+      });
+
+      if (response.ok) {
+        const results = await response.json();
+        const urls = results.map((r) => r.url);
+        setBugReportData({
+          ...bugReportData,
+          screenshots: [...bugReportData.screenshots, ...urls].slice(0, 3),
+        });
+      } else {
+        alert("Failed to upload screenshots");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload screenshots");
+    }
   };
 
   const handlePlaceSelect = (location) => {
@@ -403,110 +641,334 @@ const App = () => {
       location: location.address,
       coordinates: {
         lat: location.lat,
-        lng: location.lng
-      }
+        lng: location.lng,
+      },
     });
   };
 
   const handleLocationChange = (value) => {
     setFormData({
       ...formData,
-      location: value
+      location: value,
     });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      location: "",
+      cost: "",
+      time: "",
+      sportType: "",
+      description: "",
+      maxAttendees: "",
+      images: [],
+      coordinates: null,
+    });
+    setEditingEvent(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!token) {
-      alert('Please login to create events');
-      setShowAuthModal(true);
+      alert("Please login to create events");
       return;
     }
+
+    if (formData.images.length > 5) {
+      alert("Maximum 5 images allowed");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const eventData = {
       ...formData,
       cost: parseFloat(formData.cost) || 0,
-      maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : null
+      maxAttendees: formData.maxAttendees
+        ? parseInt(formData.maxAttendees)
+        : null,
     };
 
     try {
-      const response = await fetch(`${API_URL}/events`, {
-        method: 'POST',
+      const url = editingEvent
+        ? `${API_URL}/events/${editingEvent._id}`
+        : `${API_URL}/events`;
+      const method = editingEvent ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(eventData)
+        body: JSON.stringify(eventData),
       });
 
       if (response.ok) {
-        const newEvent = await response.json();
-        setEvents([newEvent, ...events]);
+        const savedEvent = await response.json();
+
+        if (editingEvent) {
+          setEvents(
+            events.map((e) => (e._id === savedEvent._id ? savedEvent : e)),
+          );
+          if (selectedEvent && selectedEvent._id === savedEvent._id) {
+            setSelectedEvent(savedEvent);
+          }
+          alert("Event updated successfully!");
+        } else {
+          setEvents([savedEvent, ...events]);
+          alert("Event created successfully!");
+        }
+
         setShowModal(false);
-        setFormData({
-          title: '',
-          location: '',
-          cost: '',
-          time: '',
-          sportType: '',
-          description: '',
-          maxAttendees: '',
-          images: [],
-          coordinates: null
-        });
+        resetForm();
       } else {
-        alert('Failed to create event');
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to save event");
       }
     } catch (error) {
-      console.error('Error creating event:', error);
-      alert('Failed to create event');
+      console.error("Error saving event:", error);
+      alert("Failed to save event");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!confirm("Are you sure you want to delete this event?")) return;
+
+    try {
+      const response = await fetch(`${API_URL}/events/${eventId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        setEvents(events.filter((e) => e._id !== eventId));
+        setShowEventDetailModal(false);
+        alert("Event deleted successfully!");
+      } else {
+        alert("Failed to delete event");
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      alert("Failed to delete event");
+    }
+  };
+
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setFormData({
+      title: event.title,
+      location: event.location,
+      cost: event.cost.toString(),
+      time: new Date(event.time).toISOString().slice(0, 16),
+      sportType: event.sportType,
+      description: event.description,
+      maxAttendees: event.maxAttendees ? event.maxAttendees.toString() : "",
+      images: event.images || [],
+      coordinates: event.coordinates || null,
+    });
+    setShowEventDetailModal(false);
+    setShowModal(true);
   };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    
+    setIsSubmitting(true);
+
     try {
       const response = await fetch(`${API_URL}/users/${currentUser._id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(profileFormData)
+        body: JSON.stringify(profileFormData),
       });
 
       if (response.ok) {
         const updatedUser = await response.json();
         setCurrentUser(updatedUser);
         setShowProfileModal(false);
-        alert('Profile updated successfully!');
+        alert("Profile updated successfully!");
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile');
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleBugReport = async (e) => {
+    e.preventDefault();
+
+    const bugReport = {
+      ...bugReportData,
+      userEmail: currentUser?.email || "Anonymous",
+      userName: currentUser?.name || "Anonymous",
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+    };
+
+    console.log("Bug Report Submitted:", bugReport);
+    alert(
+      "Bug report submitted successfully! Thank you for helping us improve SocialGame.",
+    );
+
+    setBugReportData({ title: "", description: "", screenshots: [] });
+    setShowBugReportModal(false);
   };
 
   const openProfileEditor = () => {
     setProfileFormData({
-      name: currentUser.name || '',
-      bio: currentUser.bio || '',
-      avatar: currentUser.avatar || '',
-      favoriteSports: currentUser.favoriteSports || []
+      name: currentUser.name || "",
+      bio: currentUser.bio || "",
+      avatar: currentUser.avatar || "",
+      favoriteSports: currentUser.favoriteSports || [],
     });
     setShowProfileModal(true);
   };
 
   const openEventDetail = (event) => {
+    if (!token) {
+      alert("Please login to view event details");
+      return;
+    }
     setSelectedEvent(event);
     setShowEventDetailModal(true);
   };
 
-  const isRegisteredForEvent = (event) => {
-    return currentUser && event.attendees?.some(a => a._id === currentUser._id);
+  const openCreateEventModal = () => {
+    if (!token) {
+      alert("Please login to create events");
+      return;
+    }
+    resetForm();
+    setShowModal(true);
   };
+
+  const isRegisteredForEvent = (event) => {
+    return (
+      currentUser && event.attendees?.some((a) => a._id === currentUser._id)
+    );
+  };
+
+  const isEventCreator = (event) => {
+    return (
+      currentUser && event.creator && event.creator._id === currentUser._id
+    );
+  };
+
+  // LOGIN WALL - Require login for everything
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              SocialGame
+            </h1>
+            <p className="text-gray-600">
+              Please login to view and join social sports events
+            </p>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-4" autoComplete="off">
+            {authMode === "register" && (
+              <>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  autoComplete="off"
+                  placeholder="Full Name"
+                  value={authFormData.name}
+                  onChange={(e) =>
+                    setAuthFormData({ ...authFormData, name: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                />
+                <input
+                  type="text"
+                  name="username"
+                  required
+                  autoComplete="off"
+                  placeholder="Username"
+                  value={authFormData.username}
+                  onChange={(e) =>
+                    setAuthFormData({
+                      ...authFormData,
+                      username: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                />
+              </>
+            )}
+
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="Email"
+              autoComplete="off"
+              value={authFormData.email}
+              onChange={(e) =>
+                setAuthFormData({ ...authFormData, email: e.target.value })
+              }
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            />
+
+            <input
+              type="password"
+              name="password"
+              required
+              placeholder="Password"
+              autoComplete={
+                authMode === "login" ? "current-password" : "new-password"
+              }
+              value={authFormData.password}
+              onChange={(e) =>
+                setAuthFormData({ ...authFormData, password: e.target.value })
+              }
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            />
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting
+                ? "Please wait..."
+                : authMode === "login"
+                  ? "Login"
+                  : "Sign Up"}
+            </button>
+          </form>
+
+          <p className="text-center mt-4 text-gray-600">
+            {authMode === "login"
+              ? "Don't have an account?"
+              : "Already have an account?"}
+            <button
+              type="button"
+              onClick={() =>
+                setAuthMode(authMode === "login" ? "register" : "login")
+              }
+              className="ml-2 text-purple-600 font-semibold hover:underline"
+            >
+              {authMode === "login" ? "Sign Up" : "Login"}
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
@@ -516,14 +978,19 @@ const App = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                SportMeet
+                SocialGame
               </h1>
-              <p className="text-gray-600 text-sm mt-1">Find & Join Social Sports Events</p>
+              <p className="text-gray-600 text-sm mt-1">
+                Find & Join Social Sports Events
+              </p>
             </div>
-            
+
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   placeholder="Search events..."
@@ -535,57 +1002,74 @@ const App = () => {
             </div>
 
             <div className="flex gap-2 items-center">
-              {currentUser ? (
-                <>
-                  <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
-                  >
-                    <Plus size={20} />
-                    Create Event
-                  </button>
-                  <button
-                    onClick={openProfileEditor}
-                    className="bg-white border-2 border-purple-600 p-2 rounded-full hover:bg-purple-50 transition-all"
-                    title={currentUser.name}
-                  >
-                    <img 
-                      src={currentUser.avatar} 
-                      alt={currentUser.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition-all flex items-center gap-2"
-                  >
-                    <LogOut size={20} />
-                  </button>
-                </>
-              ) : (
+              <button
+                onClick={() => setShowBugReportModal(true)}
+                className="bg-orange-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
+                title="Report a Bug"
+              >
+                <Bug size={20} />
+                <span className="hidden md:inline">Report Bug</span>
+              </button>
+
+              <button
+                onClick={openCreateEventModal}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Create Event
+              </button>
+
+              <div className="relative" ref={profileDropdownRef}>
                 <button
-                  onClick={() => {
-                    setAuthMode('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="bg-white border-2 border-purple-600 rounded-full hover:bg-purple-50 transition-all flex items-center gap-1 pr-3 pl-2 py-2"
+                  title={currentUser?.name}
                 >
-                  <LogIn size={20} />
-                  Login
+                  <img
+                    src={currentUser?.avatar}
+                    alt={currentUser?.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <ChevronDown size={16} className="text-purple-600" />
                 </button>
-              )}
+
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        openProfileEditor();
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
+                    >
+                      <Edit size={18} className="text-purple-600" />
+                      <span className="font-medium">Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        handleLogout();
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700 border-t border-gray-100"
+                    >
+                      <LogOut size={18} className="text-red-500" />
+                      <span className="font-medium">Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-            {sportTypes.map(sport => (
+            {sportTypes.map((sport) => (
               <button
                 key={sport}
                 onClick={() => setSelectedSport(sport)}
                 className={`px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap ${
                   selectedSport === sport
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {sport}
@@ -595,7 +1079,7 @@ const App = () => {
         </div>
       </header>
 
-      {/* Events Grid */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -603,23 +1087,32 @@ const App = () => {
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-gray-500 text-lg">No events found. Create one to get started!</p>
+            <p className="text-gray-500 text-lg">
+              {selectedSport === "My Events"
+                ? "You haven't registered for any events yet. Browse all events to find something interesting!"
+                : "No events found. Create one to get started!"}
+            </p>
+            {selectedSport === "My Events" && (
+              <button
+                onClick={() => setSelectedSport("All")}
+                className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all"
+              >
+                Browse All Events
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
               <div
                 key={event._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer relative"
                 onClick={() => openEventDetail(event)}
               >
                 <div className="relative h-56 overflow-hidden bg-gray-100">
-                  <img
-                    src={event.images[0] || 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800'}
-                    alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-purple-600">
+                  <ImageCarousel images={event.images} />
+
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-purple-600 z-10">
                     {event.sportType}
                   </div>
                   <button
@@ -627,19 +1120,24 @@ const App = () => {
                       e.stopPropagation();
                       handleLike(event._id);
                     }}
-                    className={`absolute top-3 left-3 p-2 rounded-full backdrop-blur-sm transition-all ${
+                    className={`absolute top-3 left-3 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
                       likedEvents.has(event._id)
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-white/90 text-gray-600 hover:bg-pink-500 hover:text-white'
+                        ? "bg-pink-500 text-white"
+                        : "bg-white/90 text-gray-600 hover:bg-pink-500 hover:text-white"
                     }`}
                   >
-                    <Heart size={18} fill={likedEvents.has(event._id) ? 'currentColor' : 'none'} />
+                    <Heart
+                      size={18}
+                      fill={
+                        likedEvents.has(event._id) ? "currentColor" : "none"
+                      }
+                    />
                   </button>
-                  
+
                   {event.creator && (
-                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 flex items-center gap-2">
-                      <img 
-                        src={event.creator.avatar} 
+                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 flex items-center gap-2 z-10">
+                      <img
+                        src={event.creator.avatar}
                         alt={event.creator.username}
                         className="w-5 h-5 rounded-full object-cover"
                       />
@@ -649,38 +1147,62 @@ const App = () => {
                 </div>
 
                 <div className="p-5">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2">
-                    {event.title}
-                  </h3>
-                  
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 line-clamp-2 flex-1">
+                      {event.title}
+                    </h3>
+                    {isEventCreator(event) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvent(event._id);
+                        }}
+                        className="flex-shrink-0 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                        title="Delete Event"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {event.description}
                   </p>
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin size={16} className="text-purple-600 flex-shrink-0" />
+                      <MapPin
+                        size={16}
+                        className="text-purple-600 flex-shrink-0"
+                      />
                       <span className="text-sm truncate">{event.location}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar size={16} className="text-purple-600 flex-shrink-0" />
+                      <Calendar
+                        size={16}
+                        className="text-purple-600 flex-shrink-0"
+                      />
                       <span className="text-sm">
-                        {new Date(event.time).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                        {new Date(event.time).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </span>
                     </div>
 
                     {event.attendees && event.attendees.length > 0 && (
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Users size={16} className="text-purple-600 flex-shrink-0" />
+                        <Users
+                          size={16}
+                          className="text-purple-600 flex-shrink-0"
+                        />
                         <span className="text-sm">
-                          {event.attendees.length} {event.maxAttendees ? `/ ${event.maxAttendees}` : ''} attending
+                          {event.attendees.length}{" "}
+                          {event.maxAttendees ? `/ ${event.maxAttendees}` : ""}{" "}
+                          attending
                         </span>
                       </div>
                     )}
@@ -689,10 +1211,10 @@ const App = () => {
                       <div className="flex items-center gap-2">
                         <DollarSign size={18} className="text-green-600" />
                         <span className="font-bold text-lg text-gray-800">
-                          {event.cost === 0 ? 'Free' : `$${event.cost}`}
+                          {event.cost === 0 ? "Free" : `$${event.cost}`}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-1 text-gray-500">
                         <Heart size={16} />
                         <span className="text-sm">{event.likes}</span>
@@ -701,9 +1223,17 @@ const App = () => {
                   </div>
 
                   {isRegisteredForEvent(event) ? (
-                    <div className="w-full mt-4 bg-green-100 border border-green-300 text-green-700 py-3 rounded-xl font-semibold text-center">
-                      ✓ Registered
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openUnregisterModal(event);
+                      }}
+                      className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 flex items-center justify-center gap-2 group"
+                    >
+                      <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
+                      <span className="group-hover:hidden">Registered</span>
+                      <span className="hidden group-hover:inline">Click to Unregister</span>
+                    </button>
                   ) : (
                     <button
                       onClick={(e) => {
@@ -722,19 +1252,147 @@ const App = () => {
         )}
       </main>
 
-      {/* Event Detail Modal */}
-      {showEventDetailModal && selectedEvent && (
+      {/* Bug Report Modal */}
+      {showBugReportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="relative">
-              <img
-                src={selectedEvent.images[0] || 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800'}
-                alt={selectedEvent.title}
-                className="w-full h-64 object-cover"
-              />
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <Bug className="text-orange-500" size={32} />
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Report a Bug
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowBugReportModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleBugReport} className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Bug Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bugReportData.title}
+                  onChange={(e) =>
+                    setBugReportData({
+                      ...bugReportData,
+                      title: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  placeholder="Brief description of the issue"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  required
+                  value={bugReportData.description}
+                  onChange={(e) =>
+                    setBugReportData({
+                      ...bugReportData,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  rows="5"
+                  placeholder="Please describe the bug in detail. Include steps to reproduce if possible..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Camera size={16} />
+                  Screenshots (Optional, max 3)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleBugScreenshotUpload}
+                  disabled={bugReportData.screenshots.length >= 3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {bugReportData.screenshots.length} / 3 screenshots uploaded
+                </p>
+
+                {bugReportData.screenshots.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {bugReportData.screenshots.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Screenshot ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setBugReportData({
+                              ...bugReportData,
+                              screenshots: bugReportData.screenshots.filter(
+                                (_, i) => i !== index,
+                              ),
+                            })
+                          }
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>Note:</strong> Your bug report will include your email
+                  ({currentUser?.email}) so we can follow up if needed.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBugReportModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-all flex items-center justify-center gap-2"
+                >
+                  <Send size={18} />
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Event Detail Modal - CONTINUED... */}
+      {showEventDetailModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full my-8">
+            <div className="relative h-64">
+              <ImageCarousel images={selectedEvent.images} />
               <button
                 onClick={() => setShowEventDetailModal(false)}
-                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100"
+                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 z-10"
               >
                 <X size={24} />
               </button>
@@ -743,14 +1401,18 @@ const App = () => {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">{selectedEvent.title}</h2>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                    {selectedEvent.title}
+                  </h2>
                   <span className="inline-block bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
                     {selectedEvent.sportType}
                   </span>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-gray-800">
-                    {selectedEvent.cost === 0 ? 'Free' : `$${selectedEvent.cost}`}
+                    {selectedEvent.cost === 0
+                      ? "Free"
+                      : `$${selectedEvent.cost}`}
                   </div>
                   <div className="flex items-center gap-1 text-gray-500 justify-end mt-1">
                     <Heart size={16} />
@@ -758,6 +1420,25 @@ const App = () => {
                   </div>
                 </div>
               </div>
+
+              {isEventCreator(selectedEvent) && (
+                <div className="mb-4 flex gap-2">
+                  <button
+                    onClick={() => handleEditEvent(selectedEvent)}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Edit size={18} />
+                    Edit Event
+                  </button>
+                  <button
+                    onClick={() => handleDeleteEvent(selectedEvent._id)}
+                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={18} />
+                    Delete Event
+                  </button>
+                </div>
+              )}
 
               <p className="text-gray-700 mb-6">{selectedEvent.description}</p>
 
@@ -767,14 +1448,17 @@ const App = () => {
                   <div>
                     <p className="text-sm text-gray-600">Date & Time</p>
                     <p className="font-semibold">
-                      {new Date(selectedEvent.time).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {new Date(selectedEvent.time).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </p>
                   </div>
                 </div>
@@ -784,8 +1468,11 @@ const App = () => {
                   <div>
                     <p className="text-sm text-gray-600">Attendees</p>
                     <p className="font-semibold">
-                      {selectedEvent.attendees?.length || 0} 
-                      {selectedEvent.maxAttendees ? ` / ${selectedEvent.maxAttendees}` : ''} registered
+                      {selectedEvent.attendees?.length || 0}{" "}
+                      {selectedEvent.maxAttendees
+                        ? `/ ${selectedEvent.maxAttendees}`
+                        : ""}{" "}
+                      registered
                     </p>
                   </div>
                 </div>
@@ -797,49 +1484,65 @@ const App = () => {
                   Location
                 </h3>
                 <p className="text-gray-700 mb-3">{selectedEvent.location}</p>
-                <GoogleMap location={selectedEvent.location} coordinates={selectedEvent.coordinates} />
+                <GoogleMap
+                  location={selectedEvent.location}
+                  coordinates={selectedEvent.coordinates}
+                />
               </div>
 
               {selectedEvent.creator && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-lg font-bold mb-3">Organizer</h3>
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={selectedEvent.creator.avatar} 
+                    <img
+                      src={selectedEvent.creator.avatar}
                       alt={selectedEvent.creator.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-semibold">{selectedEvent.creator.name}</p>
-                      <p className="text-sm text-gray-600">@{selectedEvent.creator.username}</p>
+                      <p className="font-semibold">
+                        {selectedEvent.creator.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        @{selectedEvent.creator.username}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {selectedEvent.attendees && selectedEvent.attendees.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-bold mb-3">Attendees</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedEvent.attendees.map(attendee => (
-                      <div key={attendee._id} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-full">
-                        <img 
-                          src={attendee.avatar} 
-                          alt={attendee.name}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                        <span className="text-sm">{attendee.username}</span>
-                      </div>
-                    ))}
+              {selectedEvent.attendees &&
+                selectedEvent.attendees.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold mb-3">Attendees</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.attendees.map((attendee) => (
+                        <div
+                          key={attendee._id}
+                          className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-full"
+                        >
+                          <img
+                            src={attendee.avatar}
+                            alt={attendee.name}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                          <span className="text-sm">{attendee.username}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
+              {/* Registration/Unregistration for everyone including creators */}
               {isRegisteredForEvent(selectedEvent) ? (
-                <div className="w-full bg-green-100 border border-green-300 text-green-700 py-3 rounded-xl font-semibold text-center">
-                  ✓ You're Registered
-                </div>
-              ) : (
+                <button
+                  onClick={() => openUnregisterModal(selectedEvent)}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:from-orange-500 hover:to-red-500 transition-all flex items-center justify-center gap-2"
+                >
+                  <X size={20} />
+                  Unregister from Event
+                </button>
+              ) : !isEventCreator(selectedEvent) && (
                 <button
                   onClick={() => handleRegisterForEvent(selectedEvent._id)}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
@@ -848,83 +1551,6 @@ const App = () => {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {authMode === 'login' ? 'Login' : 'Sign Up'}
-              </h2>
-              <button
-                onClick={() => setShowAuthModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAuth} className="space-y-4">
-              {authMode === 'register' && (
-                <>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Full Name"
-                    value={authFormData.name}
-                    onChange={(e) => setAuthFormData({...authFormData, name: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Username"
-                    value={authFormData.username}
-                    onChange={(e) => setAuthFormData({...authFormData, username: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  />
-                </>
-              )}
-              
-              <input
-                type="email"
-                required
-                placeholder="Email"
-                value={authFormData.email}
-                onChange={(e) => setAuthFormData({...authFormData, email: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-              />
-              
-              <input
-                type="password"
-                required
-                placeholder="Password"
-                value={authFormData.password}
-                onChange={(e) => setAuthFormData({...authFormData, password: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-              />
-
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
-              >
-                {authMode === 'login' ? 'Login' : 'Sign Up'}
-              </button>
-            </form>
-
-            <p className="text-center mt-4 text-gray-600">
-              {authMode === 'login' ? "Don't have an account?" : "Already have an account?"}
-              <button
-                onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                className="ml-2 text-purple-600 font-semibold hover:underline"
-              >
-                {authMode === 'login' ? 'Sign Up' : 'Login'}
-              </button>
-            </p>
           </div>
         </div>
       )}
@@ -946,14 +1572,18 @@ const App = () => {
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="flex flex-col items-center">
                 <div className="relative">
-                  <img 
-                    src={profileFormData.avatar} 
+                  <img
+                    src={profileFormData.avatar}
                     alt="Avatar"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-purple-200"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 cursor-pointer"
+                    onClick={() =>
+                      document.getElementById("profile-avatar-upload").click()
+                    }
                   />
                   <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
                     <Camera size={16} />
                     <input
+                      id="profile-avatar-upload"
                       type="file"
                       accept="image/*"
                       onChange={handleAvatarUpload}
@@ -962,44 +1592,62 @@ const App = () => {
                     />
                   </label>
                 </div>
-                {uploadingAvatar && <p className="text-sm text-gray-600 mt-2">Uploading...</p>}
+                {uploadingAvatar && (
+                  <p className="text-sm text-gray-600 mt-2">Uploading...</p>
+                )}
               </div>
 
               <input
                 type="text"
                 placeholder="Name"
                 value={profileFormData.name}
-                onChange={(e) => setProfileFormData({...profileFormData, name: e.target.value})}
+                onChange={(e) =>
+                  setProfileFormData({
+                    ...profileFormData,
+                    name: e.target.value,
+                  })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
               />
-              
+
               <textarea
                 placeholder="Bio"
                 value={profileFormData.bio}
-                onChange={(e) => setProfileFormData({...profileFormData, bio: e.target.value})}
+                onChange={(e) =>
+                  setProfileFormData({
+                    ...profileFormData,
+                    bio: e.target.value,
+                  })
+                }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 rows="3"
               />
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                disabled={isSubmitting || uploadingAvatar}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Update Profile
+                {isSubmitting ? "Updating..." : "Update Profile"}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Create Event Modal */}
+      {/* Create/Edit Event Modal - TRUNCATED FOR SPACE */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold text-gray-800">Create New Event</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {editingEvent ? "Edit Event" : "Create New Event"}
+              </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <X size={24} />
@@ -1015,7 +1663,9 @@ const App = () => {
                   type="text"
                   required
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   placeholder="e.g., Beach Volleyball Tournament"
                 />
@@ -1045,7 +1695,9 @@ const App = () => {
                     min="0"
                     step="0.01"
                     value={formData.cost}
-                    onChange={(e) => setFormData({...formData, cost: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cost: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     placeholder="0"
                   />
@@ -1059,7 +1711,9 @@ const App = () => {
                     type="number"
                     min="1"
                     value={formData.maxAttendees}
-                    onChange={(e) => setFormData({...formData, maxAttendees: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxAttendees: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     placeholder="Unlimited"
                   />
@@ -1074,7 +1728,9 @@ const App = () => {
                   type="datetime-local"
                   required
                   value={formData.time}
-                  onChange={(e) => setFormData({...formData, time: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, time: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 />
               </div>
@@ -1086,13 +1742,19 @@ const App = () => {
                 <select
                   required
                   value={formData.sportType}
-                  onChange={(e) => setFormData({...formData, sportType: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sportType: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 >
                   <option value="">Select a sport</option>
-                  {sportTypes.filter(s => s !== 'All').map(sport => (
-                    <option key={sport} value={sport}>{sport}</option>
-                  ))}
+                  {sportTypes
+                    .filter((s) => s !== "All")
+                    .map((sport) => (
+                      <option key={sport} value={sport}>
+                        {sport}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1103,7 +1765,9 @@ const App = () => {
                 <textarea
                   required
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   rows="3"
                   placeholder="Describe your event..."
@@ -1113,30 +1777,45 @@ const App = () => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <Camera size={16} />
-                  Upload Event Images (Up to 5)
+                  Upload Event Images (Maximum 5)
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={handleEventImageUpload}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                  disabled={uploadingImages}
+                  disabled={uploadingImages || formData.images.length >= 5}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                {uploadingImages && <p className="text-sm text-gray-600 mt-2">Uploading images...</p>}
-                
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.images.length} / 5 images uploaded
+                </p>
+                {uploadingImages && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Uploading images...
+                  </p>
+                )}
+
                 {formData.images.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {formData.images.map((url, index) => (
                       <div key={index} className="relative">
-                        <img src={url} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <img
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
                         <button
                           type="button"
-                          onClick={() => setFormData({
-                            ...formData,
-                            images: formData.images.filter((_, i) => i !== index)
-                          })}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              images: formData.images.filter(
+                                (_, i) => i !== index,
+                              ),
+                            })
+                          }
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
                         >
                           <X size={12} />
                         </button>
@@ -1149,20 +1828,94 @@ const App = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
-                  disabled={uploadingImages}
+                  disabled={isSubmitting || uploadingImages}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Create Event
+                  {isSubmitting
+                    ? editingEvent
+                      ? "Updating..."
+                      : "Creating..."
+                    : editingEvent
+                      ? "Update Event"
+                      : "Create Event"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Unregister Confirmation Modal */}
+      {showUnregisterModal && eventToUnregister && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Confirm Unregister</h2>
+              <button
+                onClick={() => {
+                  setShowUnregisterModal(false);
+                  setEventToUnregister(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Are you sure you want to unregister from this event?
+              </p>
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h3 className="font-bold text-lg text-purple-900 mb-2">
+                  {eventToUnregister.title}
+                </h3>
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <Calendar size={16} className="text-purple-600" />
+                  <span>
+                    {new Date(eventToUnregister.time).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <MapPin size={16} className="text-purple-600" />
+                  <span className="truncate">{eventToUnregister.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowUnregisterModal(false);
+                  setEventToUnregister(null);
+                }}
+                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUnregister}
+                className="flex-1 px-6 py-3 bg-yellow-500 text-white rounded-xl font-semibold hover:bg-yellow-600 transition-all"
+              >
+                Yes, Unregister
+              </button>
+            </div>
           </div>
         </div>
       )}
