@@ -300,13 +300,28 @@ const App = () => {
     return emojiMap[sport] || "🎯";
   };
 
+  // FIX: Clean /index.html from URL (Render redirect issue)
+  useEffect(() => {
+    const path = window.location.pathname;
+    
+    // If URL is /index.html, clean it to /
+    if (path === '/index.html') {
+      console.log('🧹 Cleaning /index.html from URL');
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   // Check if user needs to complete profile - SHOW EVERY LOGIN
   // BUT NOT if we're opening a shared event link
   useEffect(() => {
     if (currentUser && !currentUser.profileComplete) {
       // Check if there's a pending event link
-      const path = window.location.pathname;
-      const hasPendingEvent = path.match(/\/event\/([a-zA-Z0-9]+)/) || sessionStorage.getItem('pendingEventId');
+      let path = window.location.pathname;
+      if (path === '/index.html') {
+        path = window.location.hash.replace('#', '') || '/';
+      }
+      const hasPendingEvent = path.match(/\/event\/([a-zA-Z0-9]+)/) || 
+                             sessionStorage.getItem('pendingEventId');
       
       // Only show profile prompt if NOT opening an event
       if (!hasPendingEvent) {
@@ -336,11 +351,21 @@ const App = () => {
 
   // Handle shared event links - open event modal from URL
   useEffect(() => {
-    const path = window.location.pathname;
-    const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
+    // Get path and clean any /index.html
+    let path = window.location.pathname;
+    if (path === '/index.html') {
+      path = window.location.hash.replace('#', '') || '/';
+    }
     
-    if (eventIdMatch) {
-      const eventId = eventIdMatch[1];
+    // Also check search params in case event ID is there
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventIdFromParam = urlParams.get('event');
+    
+    // Try to match event ID from path
+    const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
+    const eventId = eventIdMatch ? eventIdMatch[1] : eventIdFromParam;
+    
+    if (eventId) {
       console.log('🔗 Shared link detected:', eventId);
       
       if (token && events.length > 0) {
@@ -351,7 +376,7 @@ const App = () => {
           console.log('✅ Event found, opening modal:', event.title);
           setSelectedEvent(event);
           setShowEventDetailModal(true);
-          // Clean URL without reload - delay slightly to ensure modal opens
+          // Clean URL without reload - delay slightly
           setTimeout(() => {
             window.history.replaceState({}, '', '/');
           }, 100);
@@ -364,7 +389,7 @@ const App = () => {
         sessionStorage.setItem('pendingEventId', eventId);
       }
     }
-  }, [token, events, showEventDetailModal]); // Added showEventDetailModal to deps
+  }, [token, events, showEventDetailModal]);
 
   // Open pending event after login
   useEffect(() => {
