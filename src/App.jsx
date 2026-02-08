@@ -19,6 +19,10 @@ import {
   CheckCircle,
   ChevronDown,
   Share2,
+  ArrowRight,
+  ArrowLeft,
+  Sparkles,
+  Info,
 } from "lucide-react";
 
 const API_URL =
@@ -88,8 +92,8 @@ const ImageCarousel = ({ images }) => {
           />
         ))}
       </div>
-      <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
-        {currentIndex + 1} / {images.length}
+      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
+        {currentIndex + 1}/{images.length}
       </div>
     </div>
   );
@@ -207,11 +211,15 @@ const App = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showEventDetailModal, setShowEventDetailModal] = useState(false);
   const [showBugReportModal, setShowBugReportModal] = useState(false);
+  const [showBugDashboard, setShowBugDashboard] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [bugs, setBugs] = useState([]);
   const [eventToUnregister, setEventToUnregister] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [authMode, setAuthMode] = useState("login");
+  const [signupStep, setSignupStep] = useState(1);
   const [likedEvents, setLikedEvents] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,11 +252,22 @@ const App = () => {
     name: "",
   });
 
+  const [signupData, setSignupData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    username: "",
+    location: null,
+    interests: [],
+  });
+
   const [profileFormData, setProfileFormData] = useState({
     name: "",
     bio: "",
     avatar: "",
     favoriteSports: [],
+    interests: [],
+    location: null,
   });
 
   const [bugReportData, setBugReportData] = useState({
@@ -271,6 +290,30 @@ const App = () => {
     "Other",
   ];
 
+  const getSportEmoji = (sport) => {
+    const emojiMap = {
+      Volleyball: "🏐",
+      Basketball: "🏀",
+      Soccer: "⚽",
+      Tennis: "🎾",
+      Yoga: "🧘",
+      Running: "🏃",
+      Cycling: "🚴",
+      Swimming: "🏊",
+      Other: "🎯",
+      "My Events": "✨",
+      All: "🎯",
+    };
+    return emojiMap[sport] || "🎯";
+  };
+
+  // Check if user needs to complete profile - SHOW EVERY LOGIN
+  useEffect(() => {
+    if (currentUser && !currentUser.profileComplete) {
+      setShowProfilePrompt(true);
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
@@ -284,6 +327,7 @@ const App = () => {
     if (token) {
       fetchCurrentUser();
       fetchEvents();
+      fetchBugs();
     } else {
       setLoading(false);
     }
@@ -378,6 +422,20 @@ const App = () => {
     }
   };
 
+  const fetchBugs = async () => {
+    try {
+      const response = await fetch(`${API_URL}/bugs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBugs(data);
+      }
+    } catch (error) {
+      console.error("Error fetching bugs:", error);
+    }
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -386,12 +444,15 @@ const App = () => {
     setIsSubmitting(true);
 
     try {
+      // Use signupData for registration, authFormData for login
+      const requestData = authMode === "register" ? signupData : authFormData;
+      
       const response = await fetch(`${API_URL}/auth/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(authFormData),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
@@ -404,12 +465,24 @@ const App = () => {
       setToken(data.token);
       setCurrentUser(data.user);
 
+      // Reset forms
       setAuthFormData({
         email: "",
         password: "",
         username: "",
         name: "",
       });
+      
+      setSignupData({
+        name: "",
+        email: "",
+        password: "",
+        username: "",
+        location: null,
+        interests: [],
+      });
+      
+      setSignupStep(1);
 
       const eventsResponse = await fetch(`${API_URL}/events`, {
         headers: {
@@ -836,13 +909,47 @@ const App = () => {
       userAgent: navigator.userAgent,
     };
 
-    console.log("Bug Report Submitted:", bugReport);
-    alert(
-      "Bug report submitted successfully! Thank you for helping us improve SocialGame.",
-    );
+    try {
+      const response = await fetch(`${API_URL}/bugs`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bugReport),
+      });
 
-    setBugReportData({ title: "", description: "", screenshots: [] });
-    setShowBugReportModal(false);
+      if (response.ok) {
+        alert("Bug report submitted successfully! Thank you for helping us improve SocialGame.");
+        setBugReportData({ title: "", description: "", screenshots: [] });
+        setShowBugReportModal(false);
+        fetchBugs(); // Refresh bug list
+      } else {
+        alert("Failed to submit bug report. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error submitting bug report:", error);
+      alert("Failed to submit bug report. Please try again.");
+    }
+  };
+
+  const handleBugStatusChange = async (bugId, newStatus) => {
+    try {
+      const response = await fetch(`${API_URL}/bugs/${bugId}/status`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        fetchBugs(); // Refresh bug list
+      }
+    } catch (error) {
+      console.error("Error updating bug status:", error);
+    }
   };
 
   const handleShareEvent = async (eventId, eventTitle) => {
@@ -880,6 +987,8 @@ const App = () => {
       bio: currentUser.bio || "",
       avatar: currentUser.avatar || "",
       favoriteSports: currentUser.favoriteSports || [],
+      interests: currentUser.interests || [],
+      location: currentUser.location || null,
     });
     setShowProfileModal(true);
   };
@@ -915,108 +1024,319 @@ const App = () => {
   };
 
   // LOGIN WALL - Require login for everything
-  if (!token) {
+if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
-          <div className="text-center mb-6">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-              SocialGame
-            </h1>
-            <p className="text-gray-600">
-              Please login to view and join social sports events
+        {authMode === "register" ? (
+          /* MULTI-STEP SIGNUP */
+          <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                Create Account
+              </h1>
+              <p className="text-gray-600">Step {signupStep} of 3</p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="flex items-center justify-center mb-8">
+              {[1, 2, 3].map((step) => (
+                <React.Fragment key={step}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                      signupStep >= step
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    {step}
+                  </div>
+                  {step < 3 && (
+                    <div
+                      className={`w-16 h-1 ${
+                        signupStep > step ? "bg-purple-600" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <form onSubmit={handleAuth} autoComplete="off">
+              {/* STEP 1: Basic Info */}
+              {signupStep === 1 && (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Full Name"
+                    value={signupData.name}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, name: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  />
+                  <input
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Username"
+                    value={signupData.username}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, username: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  />
+                  <input
+                    type="email"
+                    required
+                    autoComplete="off"
+                    placeholder="Email"
+                    value={signupData.email}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, email: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  />
+                  <input
+                    type="password"
+                    required
+                    autoComplete="off"
+                    placeholder="Password (min 6 characters)"
+                    value={signupData.password}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, password: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  />
+                </div>
+              )}
+
+              {/* STEP 2: Location */}
+              {signupStep === 2 && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-center gap-2 text-purple-700">
+                      <MapPin size={20} />
+                      <span className="font-semibold">Why we need your location</span>
+                    </div>
+                    <p className="text-sm text-purple-600 mt-2">
+                      We'll show you events happening near you so you can easily join
+                      activities in your area!
+                    </p>
+                  </div>
+
+                  <PlacesAutocomplete
+                    value={signupData.location?.address || ""}
+                    onChange={(value) =>
+                      setSignupData({
+                        ...signupData,
+                        location: { ...signupData.location, address: value },
+                      })
+                    }
+                    onPlaceSelect={(location) => {
+                      setSignupData({
+                        ...signupData,
+                        location: {
+                          address: location.address,
+                          coordinates: {
+                            lat: location.lat,
+                            lng: location.lng,
+                          },
+                        },
+                      });
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSignupData({
+                        ...signupData,
+                        location: { address: "Prefer not to say", coordinates: null },
+                      });
+                      setSignupStep(3);
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Skip for now
+                  </button>
+                </div>
+              )}
+
+              {/* STEP 3: Interests */}
+              {signupStep === 3 && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-center gap-2 text-purple-700">
+                      <Sparkles size={20} />
+                      <span className="font-semibold">Pick your favorite sports</span>
+                    </div>
+                    <p className="text-sm text-purple-600 mt-2">
+                      We'll recommend events based on your interests!
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      "Volleyball",
+                      "Basketball",
+                      "Soccer",
+                      "Tennis",
+                      "Yoga",
+                      "Running",
+                      "Cycling",
+                      "Swimming",
+                    ].map((sport) => (
+                      <button
+                        key={sport}
+                        type="button"
+                        onClick={() => {
+                          const newInterests = signupData.interests.includes(sport)
+                            ? signupData.interests.filter((s) => s !== sport)
+                            : [...signupData.interests, sport];
+                          setSignupData({ ...signupData, interests: newInterests });
+                        }}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          signupData.interests.includes(sport)
+                            ? "border-purple-600 bg-purple-50"
+                            : "border-gray-200 hover:border-purple-300"
+                        }`}
+                      >
+                        <div className="text-3xl mb-2">{getSportEmoji(sport)}</div>
+                        <div className="font-semibold text-sm">{sport}</div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSignupData({ ...signupData, interests: [] });
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    {signupData.interests.length > 0 ? "Clear selection" : "Skip for now"}
+                  </button>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 mt-6">
+                {signupStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setSignupStep(signupStep - 1)}
+                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft size={20} />
+                    Back
+                  </button>
+                )}
+
+                {signupStep < 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => setSignupStep(signupStep + 1)}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    Next
+                    <ArrowRight size={20} />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Creating Account..." : "Create Account"}
+                  </button>
+                )}
+              </div>
+            </form>
+
+            <p className="text-center mt-4 text-gray-600">
+              Already have an account?
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  setSignupStep(1);
+                  setSignupData({
+                    name: "",
+                    email: "",
+                    password: "",
+                    username: "",
+                    location: null,
+                    interests: [],
+                  });
+                }}
+                className="ml-2 text-purple-600 font-semibold hover:underline"
+              >
+                Login
+              </button>
             </p>
           </div>
+        ) : (
+          /* LOGIN FORM */
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+            <div className="text-center mb-6">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                SocialGame
+              </h1>
+              <p className="text-gray-600">
+                Please login to view and join social sports events
+              </p>
+            </div>
 
-          <form onSubmit={handleAuth} className="space-y-4" autoComplete="off">
-            {authMode === "register" && (
-              <>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  autoComplete="off"
-                  placeholder="Full Name"
-                  value={authFormData.name}
-                  onChange={(e) =>
-                    setAuthFormData({ ...authFormData, name: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                />
-                <input
-                  type="text"
-                  name="username"
-                  required
-                  autoComplete="off"
-                  placeholder="Username"
-                  value={authFormData.username}
-                  onChange={(e) =>
-                    setAuthFormData({
-                      ...authFormData,
-                      username: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                />
-              </>
-            )}
+            <form onSubmit={handleAuth} className="space-y-4" autoComplete="off">
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="Email"
+                autoComplete="off"
+                value={authFormData.email}
+                onChange={(e) =>
+                  setAuthFormData({ ...authFormData, email: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              />
 
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="Email"
-              autoComplete="off"
-              value={authFormData.email}
-              onChange={(e) =>
-                setAuthFormData({ ...authFormData, email: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-            />
+              <input
+                type="password"
+                name="password"
+                required
+                placeholder="Password"
+                autoComplete="current-password"
+                value={authFormData.password}
+                onChange={(e) =>
+                  setAuthFormData({ ...authFormData, password: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              />
 
-            <input
-              type="password"
-              name="password"
-              required
-              placeholder="Password"
-              autoComplete={
-                authMode === "login" ? "current-password" : "new-password"
-              }
-              value={authFormData.password}
-              onChange={(e) =>
-                setAuthFormData({ ...authFormData, password: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-            />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Please wait..." : "Login"}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting
-                ? "Please wait..."
-                : authMode === "login"
-                  ? "Login"
-                  : "Sign Up"}
-            </button>
-          </form>
-
-          <p className="text-center mt-4 text-gray-600">
-            {authMode === "login"
-              ? "Don't have an account?"
-              : "Already have an account?"}
-            <button
-              type="button"
-              onClick={() =>
-                setAuthMode(authMode === "login" ? "register" : "login")
-              }
-              className="ml-2 text-purple-600 font-semibold hover:underline"
-            >
-              {authMode === "login" ? "Sign Up" : "Login"}
-            </button>
-          </p>
-        </div>
+            <p className="text-center mt-4 text-gray-600">
+              Don't have an account?
+              <button
+                type="button"
+                onClick={() => setAuthMode("register")}
+                className="ml-2 text-purple-600 font-semibold hover:underline"
+              >
+                Sign Up
+              </button>
+            </p>
+          </div>
+        )}
       </div>
     );
   }
@@ -1053,6 +1373,15 @@ const App = () => {
             </div>
 
             <div className="flex gap-2 items-center">
+              <button
+                onClick={() => setShowBugDashboard(true)}
+                className="bg-blue-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-blue-600 transition-all flex items-center gap-2"
+                title="View All Bugs"
+              >
+                <Bug size={20} />
+                <span className="hidden md:inline">Bugs ({bugs.length})</span>
+              </button>
+
               <button
                 onClick={() => setShowBugReportModal(true)}
                 className="bg-orange-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
@@ -1317,24 +1646,24 @@ const App = () => {
 
       {/* Bug Report Modal */}
       {showBugReportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <Bug className="text-orange-500" size={32} />
-                <h2 className="text-2xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="flex justify-between items-center p-4 sm:p-6 sticky top-0 bg-white z-10 border-b">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Bug className="text-orange-500" size={24} />
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
                   Report a Bug
                 </h2>
               </div>
               <button
                 onClick={() => setShowBugReportModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleBugReport} className="space-y-5">
+            <form onSubmit={handleBugReport} className="space-y-4 sm:space-y-5 p-4 sm:p-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Bug Title *
@@ -1449,35 +1778,40 @@ const App = () => {
 
       {/* Event Detail Modal - CONTINUED... */}
       {showEventDetailModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full my-8">
-            <div className="relative h-64">
-              <ImageCarousel images={selectedEvent.images} />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            {/* Close button - sticky at top */}
+            <div className="sticky top-0 z-20 flex justify-end p-3 bg-gradient-to-b from-white via-white to-transparent">
               <button
                 onClick={() => setShowEventDetailModal(false)}
-                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 z-10"
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full shadow-lg transition-colors"
               >
-                <X size={24} />
+                <X size={20} className="text-gray-700" />
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            {/* Image carousel */}
+            <div className="relative h-48 sm:h-56 md:h-64 -mt-12">
+              <ImageCarousel images={selectedEvent.images} />
+            </div>
+
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 break-words">
                     {selectedEvent.title}
                   </h2>
                   <span className="inline-block bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
                     {selectedEvent.sportType}
                   </span>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-800">
+                <div className="text-left sm:text-right">
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-800">
                     {selectedEvent.cost === 0
                       ? "Free"
                       : `$${selectedEvent.cost}`}
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500 justify-end mt-1">
+                  <div className="flex items-center gap-1 text-gray-500 sm:justify-end mt-1">
                     <Heart size={16} />
                     <span className="text-sm">{selectedEvent.likes} likes</span>
                   </div>
@@ -1496,7 +1830,7 @@ const App = () => {
               </div>
 
               {isEventCreator(selectedEvent) && (
-                <div className="mb-4 flex gap-2">
+                <div className="mb-4 flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => handleEditEvent(selectedEvent)}
                     className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
@@ -1631,19 +1965,19 @@ const App = () => {
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Edit Profile</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="flex justify-between items-center p-4 sticky top-0 bg-white z-10 border-b">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Edit Profile</h2>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <form onSubmit={handleUpdateProfile} className="space-y-4 p-4">
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <img
@@ -1697,24 +2031,96 @@ const App = () => {
                 rows="3"
               />
 
-              <button
-                type="submit"
-                disabled={isSubmitting || uploadingAvatar}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Updating..." : "Update Profile"}
-              </button>
+              {/* Location Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <MapPin size={16} className="inline mr-1" />
+                  Location
+                </label>
+                <PlacesAutocomplete
+                  value={profileFormData.location?.address || ""}
+                  onChange={(value) =>
+                    setProfileFormData({
+                      ...profileFormData,
+                      location: { ...profileFormData.location, address: value },
+                    })
+                  }
+                  onPlaceSelect={(location) => {
+                    setProfileFormData({
+                      ...profileFormData,
+                      location: {
+                        address: location.address,
+                        coordinates: {
+                          lat: location.lat,
+                          lng: location.lng,
+                        },
+                      },
+                    });
+                  }}
+                />
+              </div>
+
+              {/* Interests Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <Sparkles size={16} className="inline mr-1" />
+                  Interests
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    "Volleyball",
+                    "Basketball",
+                    "Soccer",
+                    "Tennis",
+                    "Yoga",
+                    "Running",
+                    "Cycling",
+                    "Swimming",
+                  ].map((sport) => (
+                    <button
+                      key={sport}
+                      type="button"
+                      onClick={() => {
+                        const newInterests = profileFormData.interests?.includes(sport)
+                          ? profileFormData.interests.filter((s) => s !== sport)
+                          : [...(profileFormData.interests || []), sport];
+                        setProfileFormData({
+                          ...profileFormData,
+                          interests: newInterests,
+                        });
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                        profileFormData.interests?.includes(sport)
+                          ? "border-purple-600 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      {getSportEmoji(sport)} {sport}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-white pt-4 border-t">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || uploadingAvatar}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? "Updating..." : "Update Profile"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Create/Edit Event Modal - TRUNCATED FOR SPACE */}
+      {/* Create/Edit Event Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="p-3 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
                 {editingEvent ? "Edit Event" : "Create New Event"}
               </h2>
               <button
@@ -1722,13 +2128,13 @@ const App = () => {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Event Title *
@@ -1931,30 +2337,30 @@ const App = () => {
 
       {/* Unregister Confirmation Modal */}
       {showUnregisterModal && eventToUnregister && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Confirm Unregister</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl max-h-[96vh] overflow-y-auto my-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Confirm Unregister</h2>
               <button
                 onClick={() => {
                   setShowUnregisterModal(false);
                   setEventToUnregister(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="mb-6">
-              <p className="text-gray-700 mb-4">
+            <div className="mb-4 sm:mb-6">
+              <p className="text-gray-700 mb-4 text-sm sm:text-base">
                 Are you sure you want to unregister from this event?
               </p>
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <h3 className="font-bold text-lg text-purple-900 mb-2">
+              <div className="bg-purple-50 p-3 sm:p-4 rounded-lg border border-purple-200">
+                <h3 className="font-bold text-base sm:text-lg text-purple-900 mb-2">
                   {eventToUnregister.title}
                 </h3>
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-2">
                   <Calendar size={16} className="text-purple-600" />
                   <span>
                     {new Date(eventToUnregister.time).toLocaleDateString("en-US", {
@@ -2006,6 +2412,258 @@ const App = () => {
             >
               <X size={18} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Completion Prompt for Existing Users */}
+      {showProfilePrompt && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 max-h-[96vh] overflow-y-auto my-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                ✨ Complete Your Profile
+              </h2>
+              <button
+                onClick={() => setShowProfilePrompt(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-3 sm:space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4">
+                <p className="text-blue-800 font-semibold mb-2 text-sm sm:text-base">
+                  🎉 New features available!
+                </p>
+                <p className="text-blue-700 text-xs sm:text-sm">
+                  Add your location and interests to get personalized event
+                  recommendations!
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <MapPin className="text-purple-600" size={24} />
+                  <div>
+                    <p className="font-semibold">Add Location</p>
+                    <p className="text-sm text-gray-600">See events near you</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Sparkles className="text-purple-600" size={24} />
+                  <div>
+                    <p className="font-semibold">Pick Interests</p>
+                    <p className="text-sm text-gray-600">
+                      Get personalized recommendations
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowProfilePrompt(false);
+                    setShowProfileModal(true);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                >
+                  Complete Profile
+                </button>
+                <button
+                  onClick={() => setShowProfilePrompt(false)}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bug Dashboard Modal */}
+      {showBugDashboard && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="sticky top-0 bg-white border-b p-3 sm:p-6 z-10">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
+                  🐛 Bug Reports ({bugs.length})
+                </h2>
+                <button
+                  onClick={() => setShowBugDashboard(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                {/* Pending Bugs */}
+                <div>
+                  <h3 className="font-bold text-base sm:text-lg mb-3 text-orange-600 flex items-center gap-2">
+                    <span className="bg-orange-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
+                      Pending ({bugs.filter(b => b.status === 'pending').length})
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {bugs.filter(b => b.status === 'pending').map((bug) => (
+                      <div
+                        key={bug._id}
+                        className="bg-orange-50 border border-orange-200 rounded-xl p-4"
+                      >
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          {bug.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {bug.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          <span>{bug.userName || 'Anonymous'}</span>
+                          <span>•</span>
+                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        {bug.screenshots && bug.screenshots.length > 0 && (
+                          <div className="flex gap-2 mb-3">
+                            {bug.screenshots.map((screenshot, idx) => (
+                              <img
+                                key={idx}
+                                src={screenshot}
+                                alt="Bug screenshot"
+                                className="w-16 h-16 object-cover rounded border"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleBugStatusChange(bug._id, 'working')}
+                          className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                        >
+                          Mark as In Progress
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* In Progress Bugs */}
+                <div>
+                  <h3 className="font-bold text-lg mb-3 text-blue-600 flex items-center gap-2">
+                    <span className="bg-blue-100 px-3 py-1 rounded-full text-sm">
+                      In Progress ({bugs.filter(b => b.status === 'working').length})
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {bugs.filter(b => b.status === 'working').map((bug) => (
+                      <div
+                        key={bug._id}
+                        className="bg-blue-50 border border-blue-200 rounded-xl p-4"
+                      >
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          {bug.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {bug.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          <span>{bug.userName || 'Anonymous'}</span>
+                          <span>•</span>
+                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        {bug.screenshots && bug.screenshots.length > 0 && (
+                          <div className="flex gap-2 mb-3">
+                            {bug.screenshots.map((screenshot, idx) => (
+                              <img
+                                key={idx}
+                                src={screenshot}
+                                alt="Bug screenshot"
+                                className="w-16 h-16 object-cover rounded border"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleBugStatusChange(bug._id, 'pending')}
+                            className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
+                          >
+                            Back to Pending
+                          </button>
+                          <button
+                            onClick={() => handleBugStatusChange(bug._id, 'resolved')}
+                            className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
+                          >
+                            Mark Resolved
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resolved Bugs */}
+                <div>
+                  <h3 className="font-bold text-lg mb-3 text-green-600 flex items-center gap-2">
+                    <span className="bg-green-100 px-3 py-1 rounded-full text-sm">
+                      Resolved ({bugs.filter(b => b.status === 'resolved').length})
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {bugs.filter(b => b.status === 'resolved').map((bug) => (
+                      <div
+                        key={bug._id}
+                        className="bg-green-50 border border-green-200 rounded-xl p-4"
+                      >
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          {bug.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {bug.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          <span>{bug.userName || 'Anonymous'}</span>
+                          <span>•</span>
+                          <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        {bug.screenshots && bug.screenshots.length > 0 && (
+                          <div className="flex gap-2 mb-3">
+                            {bug.screenshots.map((screenshot, idx) => (
+                              <img
+                                key={idx}
+                                src={screenshot}
+                                alt="Bug screenshot"
+                                className="w-16 h-16 object-cover rounded border"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleBugStatusChange(bug._id, 'working')}
+                          className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                        >
+                          Reopen
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {bugs.length === 0 && (
+                <div className="text-center py-12">
+                  <Bug size={64} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg">No bugs reported yet!</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    When users report bugs, they'll appear here.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

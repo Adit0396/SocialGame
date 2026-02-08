@@ -84,6 +84,29 @@ const userSchema = new mongoose.Schema({
       type: String,
     },
   ],
+  interests: [
+    {
+      type: String,
+    },
+  ],
+  location: {
+    address: String,
+    city: String,
+    state: String,
+    country: String,
+    coordinates: {
+      lat: Number,
+      lng: Number,
+    },
+  },
+  profileComplete: {
+    type: Boolean,
+    default: false,
+  },
+  dismissedProfilePrompt: {
+    type: Boolean,
+    default: false,
+  },
   createdEvents: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -184,6 +207,25 @@ const eventSchema = new mongoose.Schema({
 });
 
 const Event = mongoose.model("Event", eventSchema);
+
+// Bug Report Schema
+const bugReportSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  screenshots: [String],
+  userEmail: String,
+  userName: String,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  timestamp: { type: Date, default: Date.now },
+  userAgent: String,
+  status: {
+    type: String,
+    enum: ['pending', 'working', 'resolved'],
+    default: 'pending'
+  }
+});
+
+const BugReport = mongoose.model("BugReport", bugReportSchema);
 
 // Multer setup
 const storage = multer.memoryStorage();
@@ -327,7 +369,7 @@ app.post(
 
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const { username, email, password, name } = req.body;
+    const { username, email, password, name, interests, location } = req.body;
 
     if (!username || !email || !password || !name) {
       return res.status(400).json({ message: "All fields are required" });
@@ -349,7 +391,19 @@ app.post("/api/auth/register", async (req, res) => {
       });
     }
 
-    const user = new User({ username, email, password, name });
+    // Check if profile is complete
+    const profileComplete = !!(interests && interests.length > 0 && location && location.address);
+
+    const user = new User({ 
+      username, 
+      email, 
+      password, 
+      name,
+      interests: interests || [],
+      location: location || {},
+      profileComplete,
+      dismissedProfilePrompt: false
+    });
     await user.save();
 
     const token = jwt.sign(
@@ -367,6 +421,10 @@ app.post("/api/auth/register", async (req, res) => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
+        interests: user.interests,
+        location: user.location,
+        profileComplete: user.profileComplete,
+        dismissedProfilePrompt: user.dismissedProfilePrompt,
       },
     });
   } catch (error) {
@@ -414,6 +472,10 @@ app.post("/api/auth/login", async (req, res) => {
         avatar: user.avatar,
         bio: user.bio,
         favoriteSports: user.favoriteSports,
+        interests: user.interests,
+        location: user.location,
+        profileComplete: user.profileComplete,
+        dismissedProfilePrompt: user.dismissedProfilePrompt,
       },
     });
   } catch (error) {
@@ -464,10 +526,27 @@ app.put("/api/users/:id", authenticateToken, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const { name, bio, avatar, favoriteSports } = req.body;
+    const { name, bio, avatar, favoriteSports, interests, location, dismissedProfilePrompt } = req.body;
+    
+    // Check if profile is complete
+    const profileComplete = !!(interests && interests.length > 0 && location && location.address);
+    
+    const updateData = {
+      name,
+      bio,
+      avatar,
+      favoriteSports,
+    };
+    
+    // Only update these fields if they're provided
+    if (interests !== undefined) updateData.interests = interests;
+    if (location !== undefined) updateData.location = location;
+    if (dismissedProfilePrompt !== undefined) updateData.dismissedProfilePrompt = dismissedProfilePrompt;
+    if (profileComplete !== undefined) updateData.profileComplete = profileComplete;
+    
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, bio, avatar, favoriteSports },
+      updateData,
       { new: true, runValidators: true },
     ).select("-password");
 
@@ -682,6 +761,64 @@ app.post("/api/events/:id/like", async (req, res) => {
     res.json(event);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// ==================== BUG REPORT ROUTES ====================
+
+// Submit bug report
+app.post("/api/bugs", authenticateToken, async (req, res) => {
+  try {
+    const bug = new BugReport({
+      ...req.body,
+      userId: req.user.userId,
+      status: 'pending'
+    });
+    await bug.save();
+    res.status(201).json(bug);
+  } catch (error) {
+    console.error("Bug submission error:", error);
+    res.status(500).json({ message: "Error submitting bug report", error: error.message });
+  }
+});
+
+// Get all bugs
+app.get("/api/bugs", authenticateToken, async (req, res) => {
+  try {
+    const bugs = await BugReport.find()
+      .populate("userId", "username email")
+      .sort({ timestamp: -1 });
+    res.json(bugs);
+  } catch (error) {
+    console.error("Fetch bugs error:", error);
+    res.status(500).json({ message: "Error fetching bugs", error: error.message });
+  }
+});
+
+// Update bug status
+app.put("/api/bugs/:id/status", authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const bug = await BugReport.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    res.json(bug);
+  } catch (error) {
+    console.error("Update bug status error:", error);
+    res.status(500).json({ message: "Error updating bug status", error: error.message });
+  }
+});
+
+// Delete bug
+app.delete("/api/bugs/:id", authenticateToken, async (req, res) => {
+  try {
+    await BugReport.findByIdAndDelete(req.params.id);
+    res.json({ message: "Bug deleted" });
+  } catch (error) {
+    console.error("Delete bug error:", error);
+    res.status(500).json({ message: "Error deleting bug", error: error.message });
   }
 });
 
