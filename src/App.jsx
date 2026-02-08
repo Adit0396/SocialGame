@@ -301,9 +301,17 @@ const App = () => {
   };
 
   // Check if user needs to complete profile - SHOW EVERY LOGIN
+  // BUT NOT if we're opening a shared event link
   useEffect(() => {
     if (currentUser && !currentUser.profileComplete) {
-      setShowProfilePrompt(true);
+      // Check if there's a pending event link
+      const path = window.location.pathname;
+      const hasPendingEvent = path.match(/\/event\/([a-zA-Z0-9]+)/) || sessionStorage.getItem('pendingEventId');
+      
+      // Only show profile prompt if NOT opening an event
+      if (!hasPendingEvent) {
+        setShowProfilePrompt(true);
+      }
     }
   }, [currentUser]);
 
@@ -333,35 +341,48 @@ const App = () => {
     
     if (eventIdMatch) {
       const eventId = eventIdMatch[1];
+      console.log('🔗 Shared link detected:', eventId);
       
       if (token && events.length > 0) {
         // User is logged in, find and open event
         const event = events.find(e => e._id === eventId);
         
         if (event) {
+          console.log('✅ Event found, opening modal:', event.title);
           setSelectedEvent(event);
           setShowEventDetailModal(true);
-          // Clean URL without reload
-          window.history.replaceState({}, '', '/');
+          // Clean URL without reload - delay slightly to ensure modal opens
+          setTimeout(() => {
+            window.history.replaceState({}, '', '/');
+          }, 100);
+        } else {
+          console.log('❌ Event not found with ID:', eventId);
         }
       } else if (!token) {
         // User not logged in, store event ID for after login
+        console.log('🔒 Not logged in, storing event ID for later');
         sessionStorage.setItem('pendingEventId', eventId);
       }
     }
-  }, [token, events]);
+  }, [token, events, showEventDetailModal]); // Added showEventDetailModal to deps
 
   // Open pending event after login
   useEffect(() => {
     if (token && events.length > 0) {
       const pendingEventId = sessionStorage.getItem('pendingEventId');
       if (pendingEventId) {
+        console.log('🔓 Logged in, opening pending event:', pendingEventId);
         const event = events.find(e => e._id === pendingEventId);
         if (event) {
+          console.log('✅ Opening event:', event.title);
           setSelectedEvent(event);
           setShowEventDetailModal(true);
           sessionStorage.removeItem('pendingEventId');
-          window.history.replaceState({}, '', '/');
+          setTimeout(() => {
+            window.history.replaceState({}, '', '/');
+          }, 100);
+        } else {
+          console.log('❌ Pending event not found:', pendingEventId);
         }
       }
     }
