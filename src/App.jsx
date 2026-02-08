@@ -92,8 +92,8 @@ const ImageCarousel = ({ images }) => {
           />
         ))}
       </div>
-      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
-        {currentIndex + 1}/{images.length}
+      <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+        {currentIndex + 1} / {images.length}
       </div>
     </div>
   );
@@ -335,18 +335,39 @@ const App = () => {
 
   // Handle shared event links - open event modal from URL
   useEffect(() => {
-    if (token && events.length > 0) {
-      const path = window.location.pathname;
-      const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
+    const path = window.location.pathname;
+    const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
+    
+    if (eventIdMatch) {
+      const eventId = eventIdMatch[1];
       
-      if (eventIdMatch) {
-        const eventId = eventIdMatch[1];
+      if (token && events.length > 0) {
+        // User is logged in, find and open event
         const event = events.find(e => e._id === eventId);
         
         if (event) {
           setSelectedEvent(event);
           setShowEventDetailModal(true);
           // Clean URL without reload
+          window.history.replaceState({}, '', '/');
+        }
+      } else if (!token) {
+        // User not logged in, store event ID for after login
+        sessionStorage.setItem('pendingEventId', eventId);
+      }
+    }
+  }, [token, events]);
+
+  // Open pending event after login
+  useEffect(() => {
+    if (token && events.length > 0) {
+      const pendingEventId = sessionStorage.getItem('pendingEventId');
+      if (pendingEventId) {
+        const event = events.find(e => e._id === pendingEventId);
+        if (event) {
+          setSelectedEvent(event);
+          setShowEventDetailModal(true);
+          sessionStorage.removeItem('pendingEventId');
           window.history.replaceState({}, '', '/');
         }
       }
@@ -1585,19 +1606,17 @@ if (!token) {
                       </span>
                     </div>
 
-                    {event.attendees && event.attendees.length > 0 && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Users
-                          size={16}
-                          className="text-purple-600 flex-shrink-0"
-                        />
-                        <span className="text-sm">
-                          {event.attendees.length}{" "}
-                          {event.maxAttendees ? `/ ${event.maxAttendees}` : ""}{" "}
-                          attending
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Users
+                        size={16}
+                        className="text-purple-600 flex-shrink-0"
+                      />
+                      <span className="text-sm">
+                        {event.attendees?.length || 0}
+                        {event.maxAttendees ? ` / ${event.maxAttendees}` : ""}{" "}
+                        attending
+                      </span>
+                    </div>
 
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                       <div className="flex items-center gap-2">
@@ -1646,24 +1665,24 @@ if (!token) {
 
       {/* Bug Report Modal */}
       {showBugReportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[96vh] overflow-y-auto my-auto">
-            <div className="flex justify-between items-center p-4 sm:p-6 sticky top-0 bg-white z-10 border-b">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Bug className="text-orange-500" size={24} />
-                <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <Bug className="text-orange-500" size={32} />
+                <h2 className="text-2xl font-bold text-gray-800">
                   Report a Bug
                 </h2>
               </div>
               <button
                 onClick={() => setShowBugReportModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleBugReport} className="space-y-4 sm:space-y-5 p-4 sm:p-6">
+            <form onSubmit={handleBugReport} className="space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Bug Title *
@@ -1778,40 +1797,35 @@ if (!token) {
 
       {/* Event Detail Modal - CONTINUED... */}
       {showEventDetailModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[96vh] overflow-y-auto my-auto">
-            {/* Close button - sticky at top */}
-            <div className="sticky top-0 z-20 flex justify-end p-3 bg-gradient-to-b from-white via-white to-transparent">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full my-8">
+            <div className="relative h-64">
+              <ImageCarousel images={selectedEvent.images} />
               <button
                 onClick={() => setShowEventDetailModal(false)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full shadow-lg transition-colors"
+                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 z-10"
               >
-                <X size={20} className="text-gray-700" />
+                <X size={24} />
               </button>
             </div>
 
-            {/* Image carousel */}
-            <div className="relative h-48 sm:h-56 md:h-64 -mt-12">
-              <ImageCarousel images={selectedEvent.images} />
-            </div>
-
-            <div className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 break-words">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">
                     {selectedEvent.title}
                   </h2>
                   <span className="inline-block bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
                     {selectedEvent.sportType}
                   </span>
                 </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-gray-800">
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-gray-800">
                     {selectedEvent.cost === 0
                       ? "Free"
                       : `$${selectedEvent.cost}`}
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500 sm:justify-end mt-1">
+                  <div className="flex items-center gap-1 text-gray-500 justify-end mt-1">
                     <Heart size={16} />
                     <span className="text-sm">{selectedEvent.likes} likes</span>
                   </div>
@@ -1830,7 +1844,7 @@ if (!token) {
               </div>
 
               {isEventCreator(selectedEvent) && (
-                <div className="mb-4 flex flex-col sm:flex-row gap-2">
+                <div className="mb-4 flex gap-2">
                   <button
                     onClick={() => handleEditEvent(selectedEvent)}
                     className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
@@ -1919,27 +1933,31 @@ if (!token) {
                 </div>
               )}
 
-              {selectedEvent.attendees &&
-                selectedEvent.attendees.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold mb-3">Attendees</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedEvent.attendees.map((attendee) => (
-                        <div
-                          key={attendee._id}
-                          className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-full"
-                        >
-                          <img
-                            src={attendee.avatar}
-                            alt={attendee.name}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                          <span className="text-sm">{attendee.username}</span>
-                        </div>
-                      ))}
-                    </div>
+              <div className="mb-6">
+                <h3 className="text-lg font-bold mb-3">
+                  Attendees ({selectedEvent.attendees?.length || 0}
+                  {selectedEvent.maxAttendees ? ` / ${selectedEvent.maxAttendees}` : ""})
+                </h3>
+                {selectedEvent.attendees && selectedEvent.attendees.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEvent.attendees.map((attendee) => (
+                      <div
+                        key={attendee._id}
+                        className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-full"
+                      >
+                        <img
+                          src={attendee.avatar}
+                          alt={attendee.name}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                        <span className="text-sm">{attendee.username}</span>
+                      </div>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No one has registered yet. Be the first!</p>
                 )}
+              </div>
 
               {/* Registration/Unregistration for everyone including creators */}
               {isRegisteredForEvent(selectedEvent) ? (
@@ -1965,19 +1983,19 @@ if (!token) {
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-md w-full max-h-[96vh] overflow-y-auto my-auto">
-            <div className="flex justify-between items-center p-4 sticky top-0 bg-white z-10 border-b">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Edit Profile</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto my-8 p-6">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-4 border-b">
+              <h2 className="text-2xl font-bold text-gray-800">Edit Profile</h2>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateProfile} className="space-y-4 p-4">
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <img
@@ -2115,12 +2133,12 @@ if (!token) {
         </div>
       )}
 
-      {/* Create/Edit Event Modal */}
+      {/* Create/Edit Event Modal - TRUNCATED FOR SPACE */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[96vh] overflow-y-auto my-auto">
-            <div className="p-3 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h2 className="text-2xl font-bold text-gray-800">
                 {editingEvent ? "Edit Event" : "Create New Event"}
               </h2>
               <button
@@ -2128,13 +2146,13 @@ if (!token) {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Event Title *
@@ -2337,30 +2355,30 @@ if (!token) {
 
       {/* Unregister Confirmation Modal */}
       {showUnregisterModal && eventToUnregister && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl max-h-[96vh] overflow-y-auto my-auto">
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Confirm Unregister</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Confirm Unregister</h2>
               <button
                 onClick={() => {
                   setShowUnregisterModal(false);
                   setEventToUnregister(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
-            <div className="mb-4 sm:mb-6">
-              <p className="text-gray-700 mb-4 text-sm sm:text-base">
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
                 Are you sure you want to unregister from this event?
               </p>
-              <div className="bg-purple-50 p-3 sm:p-4 rounded-lg border border-purple-200">
-                <h3 className="font-bold text-base sm:text-lg text-purple-900 mb-2">
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h3 className="font-bold text-lg text-purple-900 mb-2">
                   {eventToUnregister.title}
                 </h3>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                   <Calendar size={16} className="text-purple-600" />
                   <span>
                     {new Date(eventToUnregister.time).toLocaleDateString("en-US", {
@@ -2418,26 +2436,26 @@ if (!token) {
 
       {/* Profile Completion Prompt for Existing Users */}
       {showProfilePrompt && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 max-h-[96vh] overflow-y-auto my-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+              <h2 className="text-2xl font-bold text-gray-800">
                 ✨ Complete Your Profile
               </h2>
               <button
                 onClick={() => setShowProfilePrompt(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4">
-                <p className="text-blue-800 font-semibold mb-2 text-sm sm:text-base">
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-blue-800 font-semibold mb-2">
                   🎉 New features available!
                 </p>
-                <p className="text-blue-700 text-xs sm:text-sm">
+                <p className="text-blue-700 text-sm">
                   Add your location and interests to get personalized event
                   recommendations!
                 </p>
@@ -2486,28 +2504,28 @@ if (!token) {
 
       {/* Bug Dashboard Modal */}
       {showBugDashboard && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[96vh] overflow-y-auto my-auto">
-            <div className="sticky top-0 bg-white border-b p-3 sm:p-6 z-10">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8">
+            <div className="sticky top-0 bg-white border-b p-6 z-10">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
+                <h2 className="text-2xl font-bold text-gray-800">
                   🐛 Bug Reports ({bugs.length})
                 </h2>
                 <button
                   onClick={() => setShowBugDashboard(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
             </div>
 
-            <div className="p-3 sm:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Pending Bugs */}
                 <div>
-                  <h3 className="font-bold text-base sm:text-lg mb-3 text-orange-600 flex items-center gap-2">
-                    <span className="bg-orange-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
+                  <h3 className="font-bold text-lg mb-3 text-orange-600 flex items-center gap-2">
+                    <span className="bg-orange-100 px-3 py-1 rounded-full text-sm">
                       Pending ({bugs.filter(b => b.status === 'pending').length})
                     </span>
                   </h3>
