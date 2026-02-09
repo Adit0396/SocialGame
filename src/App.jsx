@@ -2883,11 +2883,11 @@ const App = () => {
                   </h2>
 
                   <div className="space-y-6">
-                    {/* Latest Version */}
+                    {/* Latest Version - v3.0.0 */}
                     <div className="border-l-4 border-green-500 bg-green-50 rounded-r-xl p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                         <h3 className="text-2xl font-bold text-gray-800">
-                          v2.5.0 - Major Updates
+                          v3.0.0 - Netflix-Style Discovery 🎬
                         </h3>
                         <span className="text-sm text-gray-600 mt-1 sm:mt-0">
                           {new Date().toLocaleDateString()}
@@ -2896,6 +2896,84 @@ const App = () => {
                       <ul className="space-y-3 text-gray-700">
                         <li className="flex items-start gap-3">
                           <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✨
+                          </span>
+                          <div>
+                            <strong>Netflix-Style Horizontal Rows:</strong> Browse events in beautiful scrollable rows - swipe on mobile, hover arrows on desktop
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            🎯
+                          </span>
+                          <div>
+                            <strong>Smart Event Sections:</strong> Auto-organized by "Near You" (50km), "This Week", "Based on Your Preferences", and individual sports
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            📍
+                          </span>
+                          <div>
+                            <strong>Distance Calculation:</strong> Haversine formula shows accurate distances from your location (e.g., "📍 5.2km")
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ❤️
+                          </span>
+                          <div>
+                            <strong>Liked Events Profile Section:</strong> Save favorite events - persists across sessions, view all in your profile with previews
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ⬅️➡️
+                          </span>
+                          <div>
+                            <strong>Hover-Activated Scroll Arrows:</strong> Large navigation arrows (28px) appear on row hover - smooth 340px scroll per click
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            🎨
+                          </span>
+                          <div>
+                            <strong>Full-Width Header:</strong> Navigation extends to screen edges, sport tabs scroll smoothly with hidden scrollbar
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            🐛
+                          </span>
+                          <div>
+                            <strong>Bug Detail Modal:</strong> Click any bug to view full details, screenshots, reporter info, and status - just like event cards
+                          </div>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            📱
+                          </span>
+                          <div>
+                            <strong>Perfect Mobile/Desktop Experience:</strong> Touch scroll on mobile, hover arrows on desktop (lg+ screens only)
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Previous Version - v2.5.0 */}
+                    <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-xl p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                        <h3 className="text-2xl font-bold text-gray-800">
+                          v2.5.0 - Major Updates
+                        </h3>
+                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                          February 2026
+                        </span>
+                      </div>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-3">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2905,7 +2983,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2915,7 +2993,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2925,7 +3003,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2934,7 +3012,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2943,7 +3021,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2952,17 +3030,7 @@ const App = () => {
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
-                            ✅
-                          </span>
-                          <div>
-                            <strong>Improved Event Detail:</strong> Redesigned
-                            event modal with better image gallery and clearer
-                            layout
-                          </div>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
                             ✅
                           </span>
                           <div>
@@ -2973,8 +3041,8 @@ const App = () => {
                       </ul>
                     </div>
 
-                    {/* Previous Version */}
-                    <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-xl p-6">
+                    {/* Original Version - v2.0.0 */}
+                    <div className="border-l-4 border-gray-400 bg-gray-50 rounded-r-xl p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                         <h3 className="text-2xl font-bold text-gray-800">
                           v2.0.0 - Core Features
