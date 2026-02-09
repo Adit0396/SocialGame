@@ -92,8 +92,8 @@ const ImageCarousel = ({ images }) => {
           />
         ))}
       </div>
-      <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
-        {currentIndex + 1} / {images.length}
+      <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
+        {currentIndex + 1}/{images.length}
       </div>
     </div>
   );
@@ -129,7 +129,7 @@ const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
       placeholder="Enter location"
     />
   );
@@ -207,6 +207,8 @@ const App = () => {
   const [showWhatsNewPage, setShowWhatsNewPage] = useState(false); // Dedicated page instead of modal
   const [whatsNewTab, setWhatsNewTab] = useState('changelog'); // 'changelog' or 'bugs'
   const [selectedBugImage, setSelectedBugImage] = useState(null); // For image modal
+  const [selectedBug, setSelectedBug] = useState(null); // For bug detail modal
+  const [showBugDetailModal, setShowBugDetailModal] = useState(false); // Bug detail modal visibility
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
@@ -1090,7 +1092,7 @@ if (!token) {
                     onChange={(e) =>
                       setSignupData({ ...signupData, name: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="text"
@@ -1101,7 +1103,7 @@ if (!token) {
                     onChange={(e) =>
                       setSignupData({ ...signupData, username: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="email"
@@ -1112,7 +1114,7 @@ if (!token) {
                     onChange={(e) =>
                       setSignupData({ ...signupData, email: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="password"
@@ -1123,7 +1125,7 @@ if (!token) {
                     onChange={(e) =>
                       setSignupData({ ...signupData, password: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   />
                 </div>
               )}
@@ -1316,7 +1318,7 @@ if (!token) {
                 onChange={(e) =>
                   setAuthFormData({ ...authFormData, email: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
               />
 
               <input
@@ -1329,13 +1331,13 @@ if (!token) {
                 onChange={(e) =>
                   setAuthFormData({ ...authFormData, password: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
               />
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Please wait..." : "Login"}
               </button>
@@ -1663,7 +1665,7 @@ if (!token) {
 
       {/* Bug Report Modal */}
       {showBugReportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
@@ -1695,7 +1697,7 @@ if (!token) {
                       title: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                   placeholder="Brief description of the issue"
                 />
               </div>
@@ -1713,7 +1715,7 @@ if (!token) {
                       description: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                   rows="5"
                   placeholder="Please describe the bug in detail. Include steps to reproduce if possible..."
                 />
@@ -1730,7 +1732,7 @@ if (!token) {
                   multiple
                   onChange={handleBugScreenshotUpload}
                   disabled={bugReportData.screenshots.length >= 3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {bugReportData.screenshots.length} / 3 screenshots uploaded
@@ -1795,37 +1797,38 @@ if (!token) {
 
       {/* Event Detail Modal - CONTINUED... */}
       {showEventDetailModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full my-8">
-            <div className="relative h-64">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl sm:rounded-2xl max-w-3xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="relative h-48 sm:h-56 md:h-64">
               <ImageCarousel images={selectedEvent.images} />
               <button
                 onClick={() => setShowEventDetailModal(false)}
-                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 z-10"
+                className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 p-1.5 sm:p-2 bg-white rounded-full hover:bg-gray-100 z-10 shadow-lg"
+                aria-label="Close"
               >
-                <X size={24} />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between mb-3 sm:mb-4 gap-3">
+                <div className="w-full sm:flex-1">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 break-words">
                     {selectedEvent.title}
                   </h2>
-                  <span className="inline-block bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="inline-block bg-purple-100 text-purple-600 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
                     {selectedEvent.sportType}
                   </span>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-800">
+                <div className="text-left sm:text-right w-full sm:w-auto flex-shrink-0">
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-800">
                     {selectedEvent.cost === 0
                       ? "Free"
                       : `$${selectedEvent.cost}`}
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500 justify-end mt-1">
-                    <Heart size={16} />
-                    <span className="text-sm">{selectedEvent.likes} likes</span>
+                  <div className="flex items-center gap-1 text-gray-500 sm:justify-end mt-1">
+                    <Heart size={14} className="sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm">{selectedEvent.likes} likes</span>
                   </div>
                 </div>
               </div>
@@ -1834,7 +1837,7 @@ if (!token) {
               <div className="mb-4">
                 <button
                   onClick={() => handleShareEvent(selectedEvent._id, selectedEvent.title)}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
                   <Share2 size={18} />
                   Share Event Link
@@ -1845,14 +1848,14 @@ if (!token) {
                 <div className="mb-4 flex gap-2">
                   <button
                     onClick={() => handleEditEvent(selectedEvent)}
-                    className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-purple-600 text-white py-2 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
                   >
                     <Edit size={18} />
                     Edit Event
                   </button>
                   <button
                     onClick={() => handleDeleteEvent(selectedEvent._id)}
-                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-xl font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-red-600 text-white py-2 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2"
                   >
                     <Trash2 size={18} />
                     Delete Event
@@ -1860,11 +1863,11 @@ if (!token) {
                 </div>
               )}
 
-              <p className="text-gray-700 mb-6">{selectedEvent.description}</p>
+              <p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 md:mb-6 break-words whitespace-pre-wrap">{selectedEvent.description}</p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="flex items-center gap-3">
-                  <Calendar className="text-purple-600" size={24} />
+                  <Calendar className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-gray-600">Date & Time</p>
                     <p className="font-semibold">
@@ -1884,7 +1887,7 @@ if (!token) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Users className="text-purple-600" size={24} />
+                  <Users className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-gray-600">Attendees</p>
                     <p className="font-semibold">
@@ -1899,8 +1902,8 @@ if (!token) {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                  <MapPin className="text-purple-600" size={20} />
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3 flex items-center gap-2">
+                  <MapPin className="text-purple-600 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   Location
                 </h3>
                 <p className="text-gray-700 mb-3">{selectedEvent.location}</p>
@@ -1911,8 +1914,8 @@ if (!token) {
               </div>
 
               {selectedEvent.creator && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-bold mb-3">Organizer</h3>
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">Organizer</h3>
                   <div className="flex items-center gap-3">
                     <img
                       src={selectedEvent.creator.avatar}
@@ -1931,29 +1934,29 @@ if (!token) {
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-3">
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">
                   Attendees ({selectedEvent.attendees?.length || 0}
                   {selectedEvent.maxAttendees ? ` / ${selectedEvent.maxAttendees}` : ""})
                 </h3>
                 {selectedEvent.attendees && selectedEvent.attendees.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {selectedEvent.attendees.map((attendee) => (
                       <div
                         key={attendee._id}
-                        className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-full"
+                        className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full"
                       >
                         <img
                           src={attendee.avatar}
                           alt={attendee.name}
-                          className="w-6 h-6 rounded-full object-cover"
+                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover flex-shrink-0"
                         />
-                        <span className="text-sm">{attendee.username}</span>
+                        <span className="text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{attendee.username}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">No one has registered yet. Be the first!</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">No one has registered yet. Be the first!</p>
                 )}
               </div>
 
@@ -1961,7 +1964,7 @@ if (!token) {
               {isRegisteredForEvent(selectedEvent) ? (
                 <button
                   onClick={() => openUnregisterModal(selectedEvent)}
-                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:from-orange-500 hover:to-red-500 transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:from-orange-500 hover:to-red-500 transition-all flex items-center justify-center gap-2"
                 >
                   <X size={20} />
                   Unregister from Event
@@ -1969,7 +1972,7 @@ if (!token) {
               ) : !isEventCreator(selectedEvent) && (
                 <button
                   onClick={() => handleRegisterForEvent(selectedEvent._id)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:shadow-lg transition-all"
                 >
                   Register for This Event
                 </button>
@@ -2031,7 +2034,7 @@ if (!token) {
                     name: e.target.value,
                   })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
               />
 
               <textarea
@@ -2043,7 +2046,7 @@ if (!token) {
                     bio: e.target.value,
                   })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 rows="3"
               />
 
@@ -2121,7 +2124,7 @@ if (!token) {
                 <button
                   type="submit"
                   disabled={isSubmitting || uploadingAvatar}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "Updating..." : "Update Profile"}
                 </button>
@@ -2133,10 +2136,10 @@ if (!token) {
 
       {/* Create/Edit Event Modal - TRUNCATED FOR SPACE */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl sm:rounded-2xl max-w-2xl w-full max-h-[96vh] overflow-y-auto my-auto">
+            <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10 gap-2">
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-800 truncate">
                 {editingEvent ? "Edit Event" : "Create New Event"}
               </h2>
               <button
@@ -2144,15 +2147,16 @@ if (!token) {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                aria-label="Close"
               >
-                <X size={24} />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                   Event Title *
                 </label>
                 <input
@@ -2162,15 +2166,15 @@ if (!token) {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   placeholder="e.g., Beach Volleyball Tournament"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <MapPin size={16} className="text-purple-600" />
-                  Location * (Type to search or enter manually)
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-2">
+                  <MapPin size={14} className="sm:w-4 sm:h-4 text-purple-600" />
+                  <span className="break-words">Location * (Type to search or enter manually)</span>
                 </label>
                 <PlacesAutocomplete
                   value={formData.location}
@@ -2180,9 +2184,9 @@ if (!token) {
                 <MiniMapPreview coordinates={formData.coordinates} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Cost ($) *
                   </label>
                   <input
@@ -2194,7 +2198,7 @@ if (!token) {
                     onChange={(e) =>
                       setFormData({ ...formData, cost: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     placeholder="0"
                   />
                 </div>
@@ -2210,7 +2214,7 @@ if (!token) {
                     onChange={(e) =>
                       setFormData({ ...formData, maxAttendees: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                     placeholder="Unlimited"
                   />
                 </div>
@@ -2227,7 +2231,7 @@ if (!token) {
                   onChange={(e) =>
                     setFormData({ ...formData, time: e.target.value })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 />
               </div>
 
@@ -2241,7 +2245,7 @@ if (!token) {
                   onChange={(e) =>
                     setFormData({ ...formData, sportType: e.target.value })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 >
                   <option value="">Select a sport</option>
                   {sportTypes
@@ -2264,7 +2268,7 @@ if (!token) {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                   rows="3"
                   placeholder="Describe your event..."
                 />
@@ -2281,7 +2285,7 @@ if (!token) {
                   multiple
                   onChange={handleEventImageUpload}
                   disabled={uploadingImages || formData.images.length >= 5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.images.length} / 5 images uploaded
@@ -2725,12 +2729,16 @@ if (!token) {
                         {bugs.filter(b => b.status === 'pending').map((bug) => (
                           <div
                             key={bug._id}
-                            className="bg-white border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                            className="bg-white border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => {
+                              setSelectedBug(bug);
+                              setShowBugDetailModal(true);
+                            }}
                           >
                             <h4 className="font-bold text-gray-800 mb-2 text-lg">
                               {bug.title}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">
+                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
                               {bug.description}
                             </p>
                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
@@ -2739,41 +2747,34 @@ if (!token) {
                               <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
                             </div>
                             
-                            {/* Screenshots */}
+                            {/* Screenshot count indicator */}
                             {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-semibold text-gray-700 mb-2">
-                                  Screenshots ({bug.screenshots.length}):
-                                </p>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {bug.screenshots.map((screenshot, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => setSelectedBugImage(screenshot)}
-                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-orange-500 transition-all group relative"
-                                    >
-                                      <img
-                                        src={screenshot}
-                                        alt={`Screenshot ${idx + 1}`}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                      />
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
-                                          View
-                                        </span>
-                                      </div>
-                                    </button>
-                                  ))}
-                                </div>
+                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
                               </div>
                             )}
 
-                            <button
-                              onClick={() => handleBugStatusChange(bug._id, 'working')}
-                              className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                            >
-                              🔨 Start Working
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedBug(bug);
+                                  setShowBugDetailModal(true);
+                                }}
+                                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                              >
+                                👁️ View Details
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBugStatusChange(bug._id, 'working');
+                                }}
+                                className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                              >
+                                🔨 Start Working
+                              </button>
+                            </div>
                           </div>
                         ))}
                         {bugs.filter(b => b.status === 'pending').length === 0 && (
@@ -2798,12 +2799,16 @@ if (!token) {
                         {bugs.filter(b => b.status === 'working').map((bug) => (
                           <div
                             key={bug._id}
-                            className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                            className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => {
+                              setSelectedBug(bug);
+                              setShowBugDetailModal(true);
+                            }}
                           >
                             <h4 className="font-bold text-gray-800 mb-2 text-lg">
                               {bug.title}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">
+                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
                               {bug.description}
                             </p>
                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
@@ -2812,45 +2817,39 @@ if (!token) {
                               <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
                             </div>
                             
-                            {/* Screenshots */}
+                            {/* Screenshot count indicator */}
                             {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-semibold text-gray-700 mb-2">
-                                  Screenshots ({bug.screenshots.length}):
-                                </p>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {bug.screenshots.map((screenshot, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => setSelectedBugImage(screenshot)}
-                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-blue-500 transition-all group relative"
-                                    >
-                                      <img
-                                        src={screenshot}
-                                        alt={`Screenshot ${idx + 1}`}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                      />
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
-                                          View
-                                        </span>
-                                      </div>
-                                    </button>
-                                  ))}
-                                </div>
+                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
                               </div>
                             )}
 
-                            <div className="flex gap-2">
+                            <div className="grid grid-cols-3 gap-2 mb-2">
                               <button
-                                onClick={() => handleBugStatusChange(bug._id, 'pending')}
-                                className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedBug(bug);
+                                  setShowBugDetailModal(true);
+                                }}
+                                className="col-span-3 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                              >
+                                👁️ View Details
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBugStatusChange(bug._id, 'pending');
+                                }}
+                                className="bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
                               >
                                 ⬅️ Back
                               </button>
                               <button
-                                onClick={() => handleBugStatusChange(bug._id, 'resolved')}
-                                className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBugStatusChange(bug._id, 'resolved');
+                                }}
+                                className="col-span-2 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
                               >
                                 ✅ Resolve
                               </button>
@@ -2879,7 +2878,11 @@ if (!token) {
                         {bugs.filter(b => b.status === 'resolved').map((bug) => (
                           <div
                             key={bug._id}
-                            className="bg-white border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-shadow opacity-75"
+                            className="bg-white border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-shadow opacity-75 hover:opacity-100 cursor-pointer"
+                            onClick={() => {
+                              setSelectedBug(bug);
+                              setShowBugDetailModal(true);
+                            }}
                           >
                             <h4 className="font-bold text-gray-800 mb-2 text-lg">
                               {bug.title}
@@ -2893,41 +2896,34 @@ if (!token) {
                               <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
                             </div>
                             
-                            {/* Screenshots */}
+                            {/* Screenshot count indicator */}
                             {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-semibold text-gray-700 mb-2">
-                                  Screenshots ({bug.screenshots.length}):
-                                </p>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {bug.screenshots.map((screenshot, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => setSelectedBugImage(screenshot)}
-                                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-green-500 transition-all group relative"
-                                    >
-                                      <img
-                                        src={screenshot}
-                                        alt={`Screenshot ${idx + 1}`}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                      />
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                                        <span className="opacity-0 group-hover:opacity-100 text-white text-xs bg-black/70 px-2 py-1 rounded">
-                                          View
-                                        </span>
-                                      </div>
-                                    </button>
-                                  ))}
-                                </div>
+                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
                               </div>
                             )}
 
-                            <button
-                              onClick={() => handleBugStatusChange(bug._id, 'working')}
-                              className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                            >
-                              🔄 Reopen
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedBug(bug);
+                                  setShowBugDetailModal(true);
+                                }}
+                                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                              >
+                                👁️ View Details
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBugStatusChange(bug._id, 'working');
+                                }}
+                                className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                              >
+                                🔄 Reopen
+                              </button>
+                            </div>
                           </div>
                         ))}
                         {bugs.filter(b => b.status === 'resolved').length === 0 && (
@@ -2963,7 +2959,7 @@ if (!token) {
       {/* Bug Image Modal */}
       {selectedBugImage && (
         <div 
-          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4"
           onClick={() => setSelectedBugImage(null)}
         >
           <div className="relative max-w-5xl w-full">
@@ -2979,6 +2975,157 @@ if (!token) {
               className="w-full h-auto rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Bug Detail Modal */}
+      {showBugDetailModal && selectedBug && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
+            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 z-10 rounded-t-2xl">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bug size={24} />
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      selectedBug.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                      selectedBug.status === 'working' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {selectedBug.status === 'pending' ? '📋 Pending' :
+                       selectedBug.status === 'working' ? '🔨 In Progress' :
+                       '✅ Resolved'}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold break-words">
+                    {selectedBug.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBugDetailModal(false);
+                    setSelectedBug(null);
+                  }}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0"
+                  aria-label="Close"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* Bug Info */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-3">Description</h3>
+                <p className="text-gray-700 whitespace-pre-wrap break-words">
+                  {selectedBug.description}
+                </p>
+              </div>
+
+              {/* Reporter and Date */}
+              <div className="mb-6 grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Reported By</p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedBug.userName || 'Anonymous'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Date</p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(selectedBug.timestamp).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Screenshots */}
+              {selectedBug.screenshots && selectedBug.screenshots.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-3">
+                    Screenshots ({selectedBug.screenshots.length})
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {selectedBug.screenshots.map((screenshot, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedBugImage(screenshot)}
+                        className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-orange-500 transition-all group relative"
+                      >
+                        <img
+                          src={screenshot}
+                          alt={`Screenshot ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-semibold bg-black/70 px-3 py-2 rounded-lg">
+                            Click to Enlarge
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                {selectedBug.status === 'pending' && (
+                  <button
+                    onClick={() => {
+                      handleBugStatusChange(selectedBug._id, 'working');
+                      setShowBugDetailModal(false);
+                      setSelectedBug(null);
+                    }}
+                    className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-600 transition-all"
+                  >
+                    🔨 Start Working on This Bug
+                  </button>
+                )}
+                {selectedBug.status === 'working' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleBugStatusChange(selectedBug._id, 'pending');
+                        setShowBugDetailModal(false);
+                        setSelectedBug(null);
+                      }}
+                      className="flex-1 bg-orange-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-orange-600 transition-all"
+                    >
+                      ⬅️ Move Back to Pending
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleBugStatusChange(selectedBug._id, 'resolved');
+                        setShowBugDetailModal(false);
+                        setSelectedBug(null);
+                      }}
+                      className="flex-1 bg-green-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-green-600 transition-all"
+                    >
+                      ✅ Mark as Resolved
+                    </button>
+                  </>
+                )}
+                {selectedBug.status === 'resolved' && (
+                  <button
+                    onClick={() => {
+                      handleBugStatusChange(selectedBug._id, 'working');
+                      setShowBugDetailModal(false);
+                      setSelectedBug(null);
+                    }}
+                    className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-600 transition-all"
+                  >
+                    🔄 Reopen This Bug
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
