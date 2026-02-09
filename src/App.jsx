@@ -304,6 +304,183 @@ const App = () => {
     return emojiMap[sport] || "🎯";
   };
 
+  // Calculate distance between two coordinates in km
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Get smart event sections based on user profile
+  const getSmartSections = () => {
+    const sections = [];
+    const now = new Date();
+    const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // Filter events that haven't passed
+    const upcomingEvents = filteredEvents.filter(event => new Date(event.time) > now);
+
+    // ========================================
+    // FOR "MY EVENTS" TAB
+    // ========================================
+    if (selectedSport === "My Events") {
+      // Section 1: My Events - Next 7 Days
+      const myEventsThisWeek = upcomingEvents.filter(event => 
+        new Date(event.time) <= oneWeekFromNow
+      );
+      if (myEventsThisWeek.length > 0) {
+        sections.push({
+          title: "📅 In the Next 7 Days",
+          subtitle: "Your registered events happening soon",
+          events: myEventsThisWeek
+        });
+      }
+
+      // Section 2: All My Events
+      if (upcomingEvents.length > 0) {
+        sections.push({
+          title: "🎉 All Your Events",
+          subtitle: `${upcomingEvents.length} events you're registered for`,
+          events: upcomingEvents
+        });
+      }
+
+      return sections;
+    }
+
+    // ========================================
+    // FOR INDIVIDUAL SPORT TABS (Basketball, Soccer, etc.)
+    // ========================================
+    if (selectedSport !== "All" && selectedSport !== "My Events") {
+      // Section 1: Near You (for this sport)
+      if (currentUser?.location && currentUser?.location.coordinates) {
+        const nearbyEvents = upcomingEvents
+          .map(event => {
+            if (event.coordinates?.lat && event.coordinates?.lng) {
+              const distance = calculateDistance(
+                currentUser.location.coordinates.lat,
+                currentUser.location.coordinates.lng,
+                event.coordinates.lat,
+                event.coordinates.lng
+              );
+              return { ...event, distance };
+            }
+            return { ...event, distance: 999 };
+          })
+          .filter(event => event.distance < 50)
+          .sort((a, b) => a.distance - b.distance);
+        
+        if (nearbyEvents.length > 0) {
+          sections.push({
+            title: "📍 Events Near You",
+            subtitle: `Within 50km of ${currentUser.location.address?.split(',')[0] || 'your location'}`,
+            events: nearbyEvents.slice(0, 10)
+          });
+        }
+      }
+
+      // Section 2: This Week (for this sport)
+      const thisWeek = upcomingEvents.filter(event => 
+        new Date(event.time) <= oneWeekFromNow
+      );
+      if (thisWeek.length > 0) {
+        sections.push({
+          title: "📅 In the Next 7 Days",
+          subtitle: "Happening soon",
+          events: thisWeek.slice(0, 10)
+        });
+      }
+
+      // Section 3: All Events (for this sport)
+      if (upcomingEvents.length > 0) {
+        sections.push({
+          title: "🎉 All Events",
+          subtitle: `${upcomingEvents.length} upcoming events`,
+          events: upcomingEvents
+        });
+      }
+
+      return sections;
+    }
+
+    // ========================================
+    // FOR "ALL" TAB
+    // ========================================
+
+
+    // Section 1: Your Preferences (if user has sport interests)
+    if (currentUser?.interests && currentUser.interests.length > 0) {
+      const preferredEvents = upcomingEvents.filter(event => 
+        currentUser.interests.includes(event.sportType)
+      );
+      if (preferredEvents.length > 0) {
+        sections.push({
+          title: "⭐ Based on Your Preferences",
+          subtitle: `${currentUser.interests.join(', ')}`,
+          events: preferredEvents.slice(0, 15)
+        });
+      }
+    }
+
+    // Section 2: Events Near You
+    if (currentUser?.location && currentUser?.location.coordinates) {
+      const nearbyEvents = upcomingEvents
+        .map(event => {
+          if (event.coordinates?.lat && event.coordinates?.lng) {
+            const distance = calculateDistance(
+              currentUser.location.coordinates.lat,
+              currentUser.location.coordinates.lng,
+              event.coordinates.lat,
+              event.coordinates.lng
+            );
+            return { ...event, distance };
+          }
+          return { ...event, distance: 999 };
+        })
+        .filter(event => event.distance < 50)
+        .sort((a, b) => a.distance - b.distance);
+      
+      if (nearbyEvents.length > 0) {
+        sections.push({
+          title: "📍 Events Near You",
+          subtitle: `Within 50km of ${currentUser.location.address?.split(',')[0] || 'your location'}`,
+          events: nearbyEvents.slice(0, 15)
+        });
+      }
+    }
+
+    // Section 3: In the Next 7 Days
+    const thisWeek = upcomingEvents.filter(event => 
+      new Date(event.time) <= oneWeekFromNow
+    );
+    if (thisWeek.length > 0) {
+      sections.push({
+        title: "📅 In the Next 7 Days",
+        subtitle: "Happening soon",
+        events: thisWeek.slice(0, 15)
+      });
+    }
+
+    // Section 4: All Events
+    if (upcomingEvents.length > 0) {
+      sections.push({
+        title: "🎉 All Events",
+        subtitle: `${upcomingEvents.length} upcoming events`,
+        events: upcomingEvents.slice(0, 20)
+      });
+    }
+
+    
+
+    return sections;
+  };
+
   // Check if user needs to complete profile - SHOW EVERY LOGIN
   useEffect(() => {
     if (currentUser && !currentUser.profileComplete) {
@@ -938,7 +1115,7 @@ const App = () => {
       });
 
       if (response.ok) {
-        alert("Bug report submitted successfully! Thank you for helping us improve SocialGame.");
+        alert("Bug report submitted successfully! Thank you for helping us improve Gathr.");
         setBugReportData({ title: "", description: "", screenshots: [] });
         setShowBugReportModal(false);
         fetchBugs(); // Refresh bug list
@@ -1300,7 +1477,7 @@ if (!token) {
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
             <div className="text-center mb-6">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                SocialGame
+                Gathr
               </h1>
               <p className="text-gray-600">
                 Please login to view and join social sports events
@@ -1367,7 +1544,7 @@ if (!token) {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                SocialGame
+                Gathr
               </h1>
               <p className="text-gray-600 text-sm mt-1">
                 Find & Join Social Sports Events
@@ -1480,14 +1657,14 @@ if (!token) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Netflix Style Rows */}
+      <main className="max-w-full px-0 py-8">
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 px-4">
             <p className="text-gray-500 text-lg">
               {selectedSport === "My Events"
                 ? "You haven't registered for any events yet. Browse all events to find something interesting!"
@@ -1503,159 +1680,177 @@ if (!token) {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-              <div
-                key={event._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer relative"
-                onClick={() => openEventDetail(event)}
-              >
-                <div className="relative h-56 overflow-hidden bg-gray-100">
-                  <ImageCarousel images={event.images} />
-
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-purple-600 z-10">
-                    {event.sportType}
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(event._id);
-                    }}
-                    className={`absolute top-3 left-3 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
-                      likedEvents.has(event._id)
-                        ? "bg-pink-500 text-white"
-                        : "bg-white/90 text-gray-600 hover:bg-pink-500 hover:text-white"
-                    }`}
-                  >
-                    <Heart
-                      size={18}
-                      fill={
-                        likedEvents.has(event._id) ? "currentColor" : "none"
-                      }
-                    />
-                  </button>
-
-                  {event.creator && (
-                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 flex items-center gap-2 z-10">
-                      <img
-                        src={event.creator.avatar}
-                        alt={event.creator.username}
-                        className="w-5 h-5 rounded-full object-cover"
-                      />
-                      {event.creator.username}
-                    </div>
-                  )}
+          <div className="space-y-8">
+            {getSmartSections().map((section, idx) => (
+              <div key={idx} className="w-full">
+                {/* Section Header */}
+                <div className="px-4 sm:px-6 lg:px-8 mb-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                    {section.title}
+                  </h2>
+                  <p className="text-sm sm:text-base text-gray-600 mt-1">
+                    {section.subtitle}
+                  </p>
                 </div>
 
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <h3 className="text-xl font-bold text-gray-800 line-clamp-2 flex-1">
-                      {event.title}
-                    </h3>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShareEvent(event._id, event.title);
-                        }}
-                        className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all"
-                        title="Share event"
-                      >
-                        <Share2 size={16} />
-                      </button>
-                      {isEventCreator(event) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteEvent(event._id);
-                          }}
-                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
-                          title="Delete Event"
+                {/* Horizontal Scrollable Row */}
+                <div className="relative group">
+                  <div className="overflow-x-auto scrollbar-hide px-4 sm:px-6 lg:px-8">
+                    <div className="flex gap-4 sm:gap-6 pb-4">
+                      {section.events.map((event) => (
+                        <div
+                          key={event._id}
+                          className="flex-shrink-0 w-[280px] sm:w-[320px] bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer relative group/card"
+                          onClick={() => openEventDetail(event)}
                         >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
+                          <div className="relative h-48 sm:h-56 overflow-hidden bg-gray-100">
+                            <ImageCarousel images={event.images} />
+
+                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-purple-600 z-10">
+                              {event.sportType}
+                            </div>
+                            
+                            {/* Distance badge if available */}
+                            {event.distance !== undefined && event.distance < 999 && (
+                              <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                                📍 {event.distance.toFixed(1)}km
+                              </div>
+                            )}
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLike(event._id);
+                              }}
+                              className={`absolute ${event.distance !== undefined && event.distance < 999 ? 'top-14' : 'top-3'} left-3 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
+                                likedEvents.has(event._id)
+                                  ? "bg-pink-500 text-white"
+                                  : "bg-white/90 text-gray-600 hover:bg-pink-500 hover:text-white"
+                              }`}
+                            >
+                              <Heart
+                                size={18}
+                                fill={
+                                  likedEvents.has(event._id) ? "currentColor" : "none"
+                                }
+                              />
+                            </button>
+
+                            {event.creator && (
+                              <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 flex items-center gap-2 z-10">
+                                <img
+                                  src={event.creator.avatar}
+                                  alt={event.creator.username}
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                                {event.creator.username}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h3 className="text-lg font-bold text-gray-800 line-clamp-2 flex-1">
+                                {event.title}
+                              </h3>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareEvent(event._id, event.title);
+                                  }}
+                                  className="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all"
+                                  title="Share event"
+                                >
+                                  <Share2 size={14} />
+                                </button>
+                                {isEventCreator(event) && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteEvent(event._id);
+                                    }}
+                                    className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                                    title="Delete Event"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                              {event.description}
+                            </p>
+
+                            <div className="space-y-2 mb-3">
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <MapPin size={14} className="text-purple-600 flex-shrink-0" />
+                                <span className="text-xs truncate">{event.location}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Calendar size={14} className="text-purple-600 flex-shrink-0" />
+                                <span className="text-xs">
+                                  {new Date(event.time).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Users size={14} className="text-purple-600 flex-shrink-0" />
+                                <span className="text-xs">
+                                  {event.attendees?.length || 0}
+                                  {event.maxAttendees ? ` / ${event.maxAttendees}` : ""} attending
+                                </span>
+                              </div>
+
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <div className="flex items-center gap-1">
+                                  <DollarSign size={16} className="text-green-600" />
+                                  <span className="font-bold text-base text-gray-800">
+                                    {event.cost === 0 ? "Free" : `$${event.cost}`}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1 text-gray-500">
+                                  <Heart size={14} />
+                                  <span className="text-xs">{event.likes}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {isRegisteredForEvent(event) ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openUnregisterModal(event);
+                                }}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 rounded-xl text-sm font-semibold hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 flex items-center justify-center gap-2 group"
+                              >
+                                <CheckCircle size={16} className="group-hover:scale-110 transition-transform" />
+                                <span className="group-hover:hidden">Registered</span>
+                                <span className="hidden group-hover:inline text-xs">Click to Unregister</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRegisterForEvent(event._id);
+                                }}
+                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-xl text-sm font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
+                              >
+                                Register
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {event.description}
-                  </p>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin
-                        size={16}
-                        className="text-purple-600 flex-shrink-0"
-                      />
-                      <span className="text-sm truncate">{event.location}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar
-                        size={16}
-                        className="text-purple-600 flex-shrink-0"
-                      />
-                      <span className="text-sm">
-                        {new Date(event.time).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Users
-                        size={16}
-                        className="text-purple-600 flex-shrink-0"
-                      />
-                      <span className="text-sm">
-                        {event.attendees?.length || 0}
-                        {event.maxAttendees ? ` / ${event.maxAttendees}` : ""}{" "}
-                        attending
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <DollarSign size={18} className="text-green-600" />
-                        <span className="font-bold text-lg text-gray-800">
-                          {event.cost === 0 ? "Free" : `$${event.cost}`}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <Heart size={16} />
-                        <span className="text-sm">{event.likes}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isRegisteredForEvent(event) ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openUnregisterModal(event);
-                      }}
-                      className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 flex items-center justify-center gap-2 group"
-                    >
-                      <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
-                      <span className="group-hover:hidden">Registered</span>
-                      <span className="hidden group-hover:inline">Click to Unregister</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRegisterForEvent(event._id);
-                      }}
-                      className="w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
-                    >
-                      Register for Event
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
@@ -2688,7 +2883,7 @@ if (!token) {
                 <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">Have Feedback?</h3>
                   <p className="text-gray-700 mb-4">
-                    We're constantly improving SportMeet based on your feedback. Found a bug or have a feature request? Let us know!
+                    We're constantly improving Gathr based on your feedback. Found a bug or have a feature request? Let us know!
                   </p>
                   <button
                     onClick={() => setShowBugReportModal(true)}

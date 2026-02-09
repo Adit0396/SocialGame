@@ -119,6 +119,12 @@ const userSchema = new mongoose.Schema({
       ref: "Event",
     },
   ],
+  likedEvents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
@@ -310,7 +316,7 @@ app.post(
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
       const result = await cloudinary.uploader.upload(dataURI, {
-        folder: "sportmeet",
+        folder: "Gathr",
         resource_type: "auto",
       });
 
@@ -345,7 +351,7 @@ app.post(
         const b64 = Buffer.from(file.buffer).toString("base64");
         const dataURI = `data:${file.mimetype};base64,${b64}`;
         const result = await cloudinary.uploader.upload(dataURI, {
-          folder: "sportmeet/events",
+          folder: "Gathr/events",
           resource_type: "auto",
         });
         return {

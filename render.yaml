@@ -1,7 +1,7 @@
 services:
   # Backend API
   - type: web
-    name: sportmeet-api
+    name: gathr-api
     env: node
     buildCommand: npm install
     startCommand: node server.js
@@ -21,7 +21,7 @@ services:
 
   # Frontend Static Site
   - type: web
-    name: sportmeet-frontend
+    name: gathr-frontend
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
