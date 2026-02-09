@@ -108,10 +108,10 @@ const PlacesAutocomplete = ({ value, onChange, onPlaceSelect }) => {
 
     const autocomplete = new window.google.maps.places.Autocomplete(
       inputRef.current,
-      { types: ['geocode'] }
+      { types: ["geocode"] },
     );
 
-    autocomplete.addListener('place_changed', () => {
+    autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
       if (place.geometry) {
         onPlaceSelect({
@@ -205,7 +205,7 @@ const App = () => {
   const [showEventDetailModal, setShowEventDetailModal] = useState(false);
   const [showBugReportModal, setShowBugReportModal] = useState(false);
   const [showWhatsNewPage, setShowWhatsNewPage] = useState(false); // Dedicated page instead of modal
-  const [whatsNewTab, setWhatsNewTab] = useState('changelog'); // 'changelog' or 'bugs'
+  const [whatsNewTab, setWhatsNewTab] = useState("changelog"); // 'changelog' or 'bugs'
   const [selectedBugImage, setSelectedBugImage] = useState(null); // For image modal
   const [selectedBug, setSelectedBug] = useState(null); // For bug detail modal
   const [showBugDetailModal, setShowBugDetailModal] = useState(false); // Bug detail modal visibility
@@ -228,7 +228,7 @@ const App = () => {
   const [editingEvent, setEditingEvent] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
-  
+
   const profileDropdownRef = useRef(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -307,13 +307,15 @@ const App = () => {
   // Calculate distance between two coordinates in km
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Radius of Earth in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
@@ -324,21 +326,23 @@ const App = () => {
     const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     // Filter events that haven't passed
-    const upcomingEvents = filteredEvents.filter(event => new Date(event.time) > now);
+    const upcomingEvents = filteredEvents.filter(
+      (event) => new Date(event.time) > now,
+    );
 
     // ========================================
     // FOR "MY EVENTS" TAB
     // ========================================
     if (selectedSport === "My Events") {
       // Section 1: My Events - Next 7 Days
-      const myEventsThisWeek = upcomingEvents.filter(event => 
-        new Date(event.time) <= oneWeekFromNow
+      const myEventsThisWeek = upcomingEvents.filter(
+        (event) => new Date(event.time) <= oneWeekFromNow,
       );
       if (myEventsThisWeek.length > 0) {
         sections.push({
           title: "📅 In the Next 7 Days",
           subtitle: "Your registered events happening soon",
-          events: myEventsThisWeek
+          events: myEventsThisWeek,
         });
       }
 
@@ -347,7 +351,7 @@ const App = () => {
         sections.push({
           title: "🎉 All Your Events",
           subtitle: `${upcomingEvents.length} events you're registered for`,
-          events: upcomingEvents
+          events: upcomingEvents,
         });
       }
 
@@ -361,39 +365,39 @@ const App = () => {
       // Section 1: Near You (for this sport)
       if (currentUser?.location && currentUser?.location.coordinates) {
         const nearbyEvents = upcomingEvents
-          .map(event => {
+          .map((event) => {
             if (event.coordinates?.lat && event.coordinates?.lng) {
               const distance = calculateDistance(
                 currentUser.location.coordinates.lat,
                 currentUser.location.coordinates.lng,
                 event.coordinates.lat,
-                event.coordinates.lng
+                event.coordinates.lng,
               );
               return { ...event, distance };
             }
             return { ...event, distance: 999 };
           })
-          .filter(event => event.distance < 50)
+          .filter((event) => event.distance < 50)
           .sort((a, b) => a.distance - b.distance);
-        
+
         if (nearbyEvents.length > 0) {
           sections.push({
             title: "📍 Events Near You",
-            subtitle: `Within 50km of ${currentUser.location.address?.split(',')[0] || 'your location'}`,
-            events: nearbyEvents.slice(0, 10)
+            subtitle: `Within 50km of ${currentUser.location.address?.split(",")[0] || "your location"}`,
+            events: nearbyEvents.slice(0, 10),
           });
         }
       }
 
       // Section 2: This Week (for this sport)
-      const thisWeek = upcomingEvents.filter(event => 
-        new Date(event.time) <= oneWeekFromNow
+      const thisWeek = upcomingEvents.filter(
+        (event) => new Date(event.time) <= oneWeekFromNow,
       );
       if (thisWeek.length > 0) {
         sections.push({
           title: "📅 In the Next 7 Days",
           subtitle: "Happening soon",
-          events: thisWeek.slice(0, 10)
+          events: thisWeek.slice(0, 10),
         });
       }
 
@@ -402,7 +406,7 @@ const App = () => {
         sections.push({
           title: "🎉 All Events",
           subtitle: `${upcomingEvents.length} upcoming events`,
-          events: upcomingEvents
+          events: upcomingEvents,
         });
       }
 
@@ -413,17 +417,16 @@ const App = () => {
     // FOR "ALL" TAB
     // ========================================
 
-
     // Section 1: Your Preferences (if user has sport interests)
     if (currentUser?.interests && currentUser.interests.length > 0) {
-      const preferredEvents = upcomingEvents.filter(event => 
-        currentUser.interests.includes(event.sportType)
+      const preferredEvents = upcomingEvents.filter((event) =>
+        currentUser.interests.includes(event.sportType),
       );
       if (preferredEvents.length > 0) {
         sections.push({
           title: "⭐ Based on Your Preferences",
-          subtitle: `${currentUser.interests.join(', ')}`,
-          events: preferredEvents.slice(0, 15)
+          subtitle: `${currentUser.interests.join(", ")}`,
+          events: preferredEvents.slice(0, 15),
         });
       }
     }
@@ -431,39 +434,39 @@ const App = () => {
     // Section 2: Events Near You
     if (currentUser?.location && currentUser?.location.coordinates) {
       const nearbyEvents = upcomingEvents
-        .map(event => {
+        .map((event) => {
           if (event.coordinates?.lat && event.coordinates?.lng) {
             const distance = calculateDistance(
               currentUser.location.coordinates.lat,
               currentUser.location.coordinates.lng,
               event.coordinates.lat,
-              event.coordinates.lng
+              event.coordinates.lng,
             );
             return { ...event, distance };
           }
           return { ...event, distance: 999 };
         })
-        .filter(event => event.distance < 50)
+        .filter((event) => event.distance < 50)
         .sort((a, b) => a.distance - b.distance);
-      
+
       if (nearbyEvents.length > 0) {
         sections.push({
           title: "📍 Events Near You",
-          subtitle: `Within 50km of ${currentUser.location.address?.split(',')[0] || 'your location'}`,
-          events: nearbyEvents.slice(0, 15)
+          subtitle: `Within 50km of ${currentUser.location.address?.split(",")[0] || "your location"}`,
+          events: nearbyEvents.slice(0, 15),
         });
       }
     }
 
     // Section 3: In the Next 7 Days
-    const thisWeek = upcomingEvents.filter(event => 
-      new Date(event.time) <= oneWeekFromNow
+    const thisWeek = upcomingEvents.filter(
+      (event) => new Date(event.time) <= oneWeekFromNow,
     );
     if (thisWeek.length > 0) {
       sections.push({
         title: "📅 In the Next 7 Days",
         subtitle: "Happening soon",
-        events: thisWeek.slice(0, 15)
+        events: thisWeek.slice(0, 15),
       });
     }
 
@@ -472,11 +475,9 @@ const App = () => {
       sections.push({
         title: "🎉 All Events",
         subtitle: `${upcomingEvents.length} upcoming events`,
-        events: upcomingEvents.slice(0, 20)
+        events: upcomingEvents.slice(0, 20),
       });
     }
-
-    
 
     return sections;
   };
@@ -511,23 +512,23 @@ const App = () => {
   useEffect(() => {
     const path = window.location.pathname;
     const eventIdMatch = path.match(/\/event\/([a-zA-Z0-9]+)/);
-    
+
     if (eventIdMatch) {
       const eventId = eventIdMatch[1];
-      
+
       if (token && events.length > 0) {
         // User is logged in, find and open event
-        const event = events.find(e => e._id === eventId);
-        
+        const event = events.find((e) => e._id === eventId);
+
         if (event) {
           setSelectedEvent(event);
           setShowEventDetailModal(true);
           // Clean URL without reload
-          window.history.replaceState({}, '', '/');
+          window.history.replaceState({}, "", "/");
         }
       } else if (!token) {
         // User not logged in, store event ID for after login
-        sessionStorage.setItem('pendingEventId', eventId);
+        sessionStorage.setItem("pendingEventId", eventId);
       }
     }
   }, [token, events]);
@@ -535,14 +536,14 @@ const App = () => {
   // Open pending event after login
   useEffect(() => {
     if (token && events.length > 0) {
-      const pendingEventId = sessionStorage.getItem('pendingEventId');
+      const pendingEventId = sessionStorage.getItem("pendingEventId");
       if (pendingEventId) {
-        const event = events.find(e => e._id === pendingEventId);
+        const event = events.find((e) => e._id === pendingEventId);
         if (event) {
           setSelectedEvent(event);
           setShowEventDetailModal(true);
-          sessionStorage.removeItem('pendingEventId');
-          window.history.replaceState({}, '', '/');
+          sessionStorage.removeItem("pendingEventId");
+          window.history.replaceState({}, "", "/");
         }
       }
     }
@@ -550,16 +551,16 @@ const App = () => {
 
   useEffect(() => {
     let filtered = events;
-    
+
     // Filter by "My Events" (registered events)
     if (selectedSport === "My Events" && currentUser) {
       filtered = filtered.filter((event) =>
-        event.attendees?.some((a) => a._id === currentUser._id)
+        event.attendees?.some((a) => a._id === currentUser._id),
       );
     } else if (selectedSport !== "All" && selectedSport !== "My Events") {
       filtered = filtered.filter((event) => event.sportType === selectedSport);
     }
-    
+
     if (searchQuery) {
       filtered = filtered.filter(
         (event) =>
@@ -574,7 +575,10 @@ const App = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
         setShowProfileDropdown(false);
       }
     };
@@ -641,7 +645,7 @@ const App = () => {
     try {
       // Use signupData for registration, authFormData for login
       const requestData = authMode === "register" ? signupData : authFormData;
-      
+
       const response = await fetch(`${API_URL}/auth/${endpoint}`, {
         method: "POST",
         headers: {
@@ -667,7 +671,7 @@ const App = () => {
         username: "",
         name: "",
       });
-      
+
       setSignupData({
         name: "",
         email: "",
@@ -676,7 +680,7 @@ const App = () => {
         location: null,
         interests: [],
       });
-      
+
       setSignupStep(1);
 
       const eventsResponse = await fetch(`${API_URL}/events`, {
@@ -1115,7 +1119,9 @@ const App = () => {
       });
 
       if (response.ok) {
-        alert("Bug report submitted successfully! Thank you for helping us improve Gathr.");
+        alert(
+          "Bug report submitted successfully! Thank you for helping us improve Gathr.",
+        );
         setBugReportData({ title: "", description: "", screenshots: [] });
         setShowBugReportModal(false);
         fetchBugs(); // Refresh bug list
@@ -1149,7 +1155,7 @@ const App = () => {
 
   const handleShareEvent = async (eventId, eventTitle) => {
     const shareUrl = `${window.location.origin}/event/${eventId}`;
-    
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       showToast("Link copied to clipboard!");
@@ -1161,7 +1167,7 @@ const App = () => {
       document.body.appendChild(textArea);
       textArea.select();
       try {
-        document.execCommand('copy');
+        document.execCommand("copy");
         showToast("Link copied to clipboard!");
       } catch (err2) {
         console.error("Fallback copy failed:", err2);
@@ -1219,7 +1225,7 @@ const App = () => {
   };
 
   // LOGIN WALL - Require login for everything
-if (!token) {
+  if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center p-4">
         {authMode === "register" ? (
@@ -1313,11 +1319,13 @@ if (!token) {
                   <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-2 text-purple-700">
                       <MapPin size={20} />
-                      <span className="font-semibold">Why we need your location</span>
+                      <span className="font-semibold">
+                        Why we need your location
+                      </span>
                     </div>
                     <p className="text-sm text-purple-600 mt-2">
-                      We'll show you events happening near you so you can easily join
-                      activities in your area!
+                      We'll show you events happening near you so you can easily
+                      join activities in your area!
                     </p>
                   </div>
 
@@ -1348,7 +1356,10 @@ if (!token) {
                     onClick={() => {
                       setSignupData({
                         ...signupData,
-                        location: { address: "Prefer not to say", coordinates: null },
+                        location: {
+                          address: "Prefer not to say",
+                          coordinates: null,
+                        },
                       });
                       setSignupStep(3);
                     }}
@@ -1365,7 +1376,9 @@ if (!token) {
                   <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-2 text-purple-700">
                       <Sparkles size={20} />
-                      <span className="font-semibold">Pick your favorite sports</span>
+                      <span className="font-semibold">
+                        Pick your favorite sports
+                      </span>
                     </div>
                     <p className="text-sm text-purple-600 mt-2">
                       We'll recommend events based on your interests!
@@ -1387,10 +1400,15 @@ if (!token) {
                         key={sport}
                         type="button"
                         onClick={() => {
-                          const newInterests = signupData.interests.includes(sport)
+                          const newInterests = signupData.interests.includes(
+                            sport,
+                          )
                             ? signupData.interests.filter((s) => s !== sport)
                             : [...signupData.interests, sport];
-                          setSignupData({ ...signupData, interests: newInterests });
+                          setSignupData({
+                            ...signupData,
+                            interests: newInterests,
+                          });
                         }}
                         className={`p-4 rounded-xl border-2 transition-all ${
                           signupData.interests.includes(sport)
@@ -1398,7 +1416,9 @@ if (!token) {
                             : "border-gray-200 hover:border-purple-300"
                         }`}
                       >
-                        <div className="text-3xl mb-2">{getSportEmoji(sport)}</div>
+                        <div className="text-3xl mb-2">
+                          {getSportEmoji(sport)}
+                        </div>
                         <div className="font-semibold text-sm">{sport}</div>
                       </button>
                     ))}
@@ -1411,7 +1431,9 @@ if (!token) {
                     }}
                     className="text-sm text-gray-500 hover:text-gray-700"
                   >
-                    {signupData.interests.length > 0 ? "Clear selection" : "Skip for now"}
+                    {signupData.interests.length > 0
+                      ? "Clear selection"
+                      : "Skip for now"}
                   </button>
                 </div>
               )}
@@ -1484,7 +1506,11 @@ if (!token) {
               </p>
             </div>
 
-            <form onSubmit={handleAuth} className="space-y-4" autoComplete="off">
+            <form
+              onSubmit={handleAuth}
+              className="space-y-4"
+              autoComplete="off"
+            >
               <input
                 type="email"
                 name="email"
@@ -1540,7 +1566,7 @@ if (!token) {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -1571,7 +1597,7 @@ if (!token) {
               <button
                 onClick={() => {
                   setShowWhatsNewPage(true);
-                  setWhatsNewTab('changelog');
+                  setWhatsNewTab("changelog");
                 }}
                 className="bg-green-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-green-600 transition-all flex items-center gap-2"
                 title="What's New & Changelog"
@@ -1579,7 +1605,7 @@ if (!token) {
                 <span className="text-lg">✨</span>
                 <span className="hidden md:inline">What's New</span>
               </button>
-              
+
               <button
                 onClick={() => setShowBugReportModal(true)}
                 className="bg-orange-500 text-white px-4 py-3 rounded-full font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
@@ -1638,16 +1664,18 @@ if (!token) {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+        <div className="border-t border-gray-100">
+          <div className="flex gap-2 px-4 sm:px-6 lg:px-8 py-3 overflow-x-auto scrollbar-hide">
             {sportTypes.map((sport) => (
               <button
                 key={sport}
                 onClick={() => setSelectedSport(sport)}
-                className={`px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap ${
+                className={`px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                   selectedSport === sport
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 {sport}
@@ -1693,8 +1721,44 @@ if (!token) {
                   </p>
                 </div>
 
-                {/* Horizontal Scrollable Row */}
-                <div className="relative group">
+                {/* Horizontal Scrollable Row with Hover Arrows */}
+                <div className="relative group/row">
+                  {/* Left Arrow - Appears on hover */}
+                  <button
+                    onClick={(e) => {
+                      const scrollContainer =
+                        e.currentTarget.parentElement.querySelector(
+                          ".overflow-x-auto",
+                        );
+                      scrollContainer?.scrollBy({
+                        left: -340,
+                        behavior: "smooth",
+                      });
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-xl rounded-full p-4 transition-all opacity-0 group-hover/row:opacity-100 hidden lg:flex items-center justify-center border-2 border-gray-200 hover:border-purple-500 hover:scale-110"
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeft size={28} className="text-gray-700" />
+                  </button>
+
+                  {/* Right Arrow - Appears on hover */}
+                  <button
+                    onClick={(e) => {
+                      const scrollContainer =
+                        e.currentTarget.parentElement.querySelector(
+                          ".overflow-x-auto",
+                        );
+                      scrollContainer?.scrollBy({
+                        left: 340,
+                        behavior: "smooth",
+                      });
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-xl rounded-full p-4 transition-all opacity-0 group-hover/row:opacity-100 hidden lg:flex items-center justify-center border-2 border-gray-200 hover:border-purple-500 hover:scale-110"
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRight size={28} className="text-gray-700" />
+                  </button>
+
                   <div className="overflow-x-auto scrollbar-hide px-4 sm:px-6 lg:px-8">
                     <div className="flex gap-4 sm:gap-6 pb-4">
                       {section.events.map((event) => (
@@ -1709,20 +1773,21 @@ if (!token) {
                             <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-purple-600 z-10">
                               {event.sportType}
                             </div>
-                            
+
                             {/* Distance badge if available */}
-                            {event.distance !== undefined && event.distance < 999 && (
-                              <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
-                                📍 {event.distance.toFixed(1)}km
-                              </div>
-                            )}
-                            
+                            {event.distance !== undefined &&
+                              event.distance < 999 && (
+                                <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                                  📍 {event.distance.toFixed(1)}km
+                                </div>
+                              )}
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleLike(event._id);
                               }}
-                              className={`absolute ${event.distance !== undefined && event.distance < 999 ? 'top-14' : 'top-3'} left-3 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
+                              className={`absolute ${event.distance !== undefined && event.distance < 999 ? "top-14" : "top-3"} left-3 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
                                 likedEvents.has(event._id)
                                   ? "bg-pink-500 text-white"
                                   : "bg-white/90 text-gray-600 hover:bg-pink-500 hover:text-white"
@@ -1731,7 +1796,9 @@ if (!token) {
                               <Heart
                                 size={18}
                                 fill={
-                                  likedEvents.has(event._id) ? "currentColor" : "none"
+                                  likedEvents.has(event._id)
+                                    ? "currentColor"
+                                    : "none"
                                 }
                               />
                             </button>
@@ -1784,35 +1851,57 @@ if (!token) {
 
                             <div className="space-y-2 mb-3">
                               <div className="flex items-center gap-2 text-gray-600">
-                                <MapPin size={14} className="text-purple-600 flex-shrink-0" />
-                                <span className="text-xs truncate">{event.location}</span>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-gray-600">
-                                <Calendar size={14} className="text-purple-600 flex-shrink-0" />
-                                <span className="text-xs">
-                                  {new Date(event.time).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
+                                <MapPin
+                                  size={14}
+                                  className="text-purple-600 flex-shrink-0"
+                                />
+                                <span className="text-xs truncate">
+                                  {event.location}
                                 </span>
                               </div>
 
                               <div className="flex items-center gap-2 text-gray-600">
-                                <Users size={14} className="text-purple-600 flex-shrink-0" />
+                                <Calendar
+                                  size={14}
+                                  className="text-purple-600 flex-shrink-0"
+                                />
+                                <span className="text-xs">
+                                  {new Date(event.time).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Users
+                                  size={14}
+                                  className="text-purple-600 flex-shrink-0"
+                                />
                                 <span className="text-xs">
                                   {event.attendees?.length || 0}
-                                  {event.maxAttendees ? ` / ${event.maxAttendees}` : ""} attending
+                                  {event.maxAttendees
+                                    ? ` / ${event.maxAttendees}`
+                                    : ""}{" "}
+                                  attending
                                 </span>
                               </div>
 
                               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                                 <div className="flex items-center gap-1">
-                                  <DollarSign size={16} className="text-green-600" />
+                                  <DollarSign
+                                    size={16}
+                                    className="text-green-600"
+                                  />
                                   <span className="font-bold text-base text-gray-800">
-                                    {event.cost === 0 ? "Free" : `$${event.cost}`}
+                                    {event.cost === 0
+                                      ? "Free"
+                                      : `$${event.cost}`}
                                   </span>
                                 </div>
 
@@ -1831,9 +1920,16 @@ if (!token) {
                                 }}
                                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 rounded-xl text-sm font-semibold hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 flex items-center justify-center gap-2 group"
                               >
-                                <CheckCircle size={16} className="group-hover:scale-110 transition-transform" />
-                                <span className="group-hover:hidden">Registered</span>
-                                <span className="hidden group-hover:inline text-xs">Click to Unregister</span>
+                                <CheckCircle
+                                  size={16}
+                                  className="group-hover:scale-110 transition-transform"
+                                />
+                                <span className="group-hover:hidden">
+                                  Registered
+                                </span>
+                                <span className="hidden group-hover:inline text-xs">
+                                  Click to Unregister
+                                </span>
                               </button>
                             ) : (
                               <button
@@ -2023,7 +2119,9 @@ if (!token) {
                   </div>
                   <div className="flex items-center gap-1 text-gray-500 sm:justify-end mt-1">
                     <Heart size={14} className="sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-sm">{selectedEvent.likes} likes</span>
+                    <span className="text-xs sm:text-sm">
+                      {selectedEvent.likes} likes
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2031,7 +2129,9 @@ if (!token) {
               {/* Share button - visible for everyone */}
               <div className="mb-4">
                 <button
-                  onClick={() => handleShareEvent(selectedEvent._id, selectedEvent.title)}
+                  onClick={() =>
+                    handleShareEvent(selectedEvent._id, selectedEvent.title)
+                  }
                   className="w-full bg-blue-600 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
                   <Share2 size={18} />
@@ -2058,7 +2158,9 @@ if (!token) {
                 </div>
               )}
 
-              <p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 md:mb-6 break-words whitespace-pre-wrap">{selectedEvent.description}</p>
+              <p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 md:mb-6 break-words whitespace-pre-wrap">
+                {selectedEvent.description}
+              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="flex items-center gap-3">
@@ -2110,7 +2212,9 @@ if (!token) {
 
               {selectedEvent.creator && (
                 <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">Organizer</h3>
+                  <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">
+                    Organizer
+                  </h3>
                   <div className="flex items-center gap-3">
                     <img
                       src={selectedEvent.creator.avatar}
@@ -2132,9 +2236,13 @@ if (!token) {
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3">
                   Attendees ({selectedEvent.attendees?.length || 0}
-                  {selectedEvent.maxAttendees ? ` / ${selectedEvent.maxAttendees}` : ""})
+                  {selectedEvent.maxAttendees
+                    ? ` / ${selectedEvent.maxAttendees}`
+                    : ""}
+                  )
                 </h3>
-                {selectedEvent.attendees && selectedEvent.attendees.length > 0 ? (
+                {selectedEvent.attendees &&
+                selectedEvent.attendees.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {selectedEvent.attendees.map((attendee) => (
                       <div
@@ -2146,12 +2254,16 @@ if (!token) {
                           alt={attendee.name}
                           className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover flex-shrink-0"
                         />
-                        <span className="text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{attendee.username}</span>
+                        <span className="text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
+                          {attendee.username}
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-xs sm:text-sm">No one has registered yet. Be the first!</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">
+                    No one has registered yet. Be the first!
+                  </p>
                 )}
               </div>
 
@@ -2164,13 +2276,15 @@ if (!token) {
                   <X size={20} />
                   Unregister from Event
                 </button>
-              ) : !isEventCreator(selectedEvent) && (
-                <button
-                  onClick={() => handleRegisterForEvent(selectedEvent._id)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:shadow-lg transition-all"
-                >
-                  Register for This Event
-                </button>
+              ) : (
+                !isEventCreator(selectedEvent) && (
+                  <button
+                    onClick={() => handleRegisterForEvent(selectedEvent._id)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold hover:shadow-lg transition-all"
+                  >
+                    Register for This Event
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -2295,9 +2409,12 @@ if (!token) {
                       key={sport}
                       type="button"
                       onClick={() => {
-                        const newInterests = profileFormData.interests?.includes(sport)
-                          ? profileFormData.interests.filter((s) => s !== sport)
-                          : [...(profileFormData.interests || []), sport];
+                        const newInterests =
+                          profileFormData.interests?.includes(sport)
+                            ? profileFormData.interests.filter(
+                                (s) => s !== sport,
+                              )
+                            : [...(profileFormData.interests || []), sport];
                         setProfileFormData({
                           ...profileFormData,
                           interests: newInterests,
@@ -2349,7 +2466,10 @@ if (!token) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-5">
+            <form
+              onSubmit={handleSubmit}
+              className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-5"
+            >
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                   Event Title *
@@ -2369,7 +2489,9 @@ if (!token) {
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-2">
                   <MapPin size={14} className="sm:w-4 sm:h-4 text-purple-600" />
-                  <span className="break-words">Location * (Type to search or enter manually)</span>
+                  <span className="break-words">
+                    Location * (Type to search or enter manually)
+                  </span>
                 </label>
                 <PlacesAutocomplete
                   value={formData.location}
@@ -2555,7 +2677,9 @@ if (!token) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Confirm Unregister</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Confirm Unregister
+              </h2>
               <button
                 onClick={() => {
                   setShowUnregisterModal(false);
@@ -2578,13 +2702,16 @@ if (!token) {
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                   <Calendar size={16} className="text-purple-600" />
                   <span>
-                    {new Date(eventToUnregister.time).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(eventToUnregister.time).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -2718,25 +2845,25 @@ if (!token) {
                   <X size={24} />
                 </button>
               </div>
-              
+
               {/* Tabs */}
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={() => setWhatsNewTab('changelog')}
+                  onClick={() => setWhatsNewTab("changelog")}
                   className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                    whatsNewTab === 'changelog'
-                      ? 'bg-white text-green-600'
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                    whatsNewTab === "changelog"
+                      ? "bg-white text-green-600"
+                      : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                 >
                   📝 Changelog
                 </button>
                 <button
-                  onClick={() => setWhatsNewTab('bugs')}
+                  onClick={() => setWhatsNewTab("bugs")}
                   className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                    whatsNewTab === 'bugs'
-                      ? 'bg-white text-blue-600'
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                    whatsNewTab === "bugs"
+                      ? "bg-white text-blue-600"
+                      : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                 >
                   🐛 Bugs ({bugs.length})
@@ -2747,66 +2874,100 @@ if (!token) {
 
           {/* Content */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            {whatsNewTab === 'changelog' ? (
+            {whatsNewTab === "changelog" ? (
               /* CHANGELOG TAB */
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-6">Recent Updates</h2>
-                  
+                  <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                    Recent Updates
+                  </h2>
+
                   <div className="space-y-6">
                     {/* Latest Version */}
                     <div className="border-l-4 border-green-500 bg-green-50 rounded-r-xl p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-gray-800">v2.5.0 - Major Updates</h3>
-                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">{new Date().toLocaleDateString()}</span>
+                        <h3 className="text-2xl font-bold text-gray-800">
+                          v2.5.0 - Major Updates
+                        </h3>
+                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                          {new Date().toLocaleDateString()}
+                        </span>
                       </div>
                       <ul className="space-y-3 text-gray-700">
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Shared Event Links:</strong> Share events with direct links that open automatically for logged-in users
+                            <strong>Shared Event Links:</strong> Share events
+                            with direct links that open automatically for
+                            logged-in users
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Profile Completion:</strong> Add your location and sport interests for personalized event recommendations
+                            <strong>Profile Completion:</strong> Add your
+                            location and sport interests for personalized event
+                            recommendations
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Multi-Step Signup:</strong> Streamlined registration process with optional profile information
+                            <strong>Multi-Step Signup:</strong> Streamlined
+                            registration process with optional profile
+                            information
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Bug Tracking System:</strong> Report bugs with screenshots and track their status in real-time
+                            <strong>Bug Tracking System:</strong> Report bugs
+                            with screenshots and track their status in real-time
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Attendee Count Display:</strong> Always see event capacity (e.g., "0 / 20 attending")
+                            <strong>Attendee Count Display:</strong> Always see
+                            event capacity (e.g., "0 / 20 attending")
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Responsive Design:</strong> All modals and pages work perfectly on screens as small as 320px
+                            <strong>Responsive Design:</strong> All modals and
+                            pages work perfectly on screens as small as 320px
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Improved Event Detail:</strong> Redesigned event modal with better image gallery and clearer layout
+                            <strong>Improved Event Detail:</strong> Redesigned
+                            event modal with better image gallery and clearer
+                            layout
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-green-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>What's New Page:</strong> Dedicated page for changelog and bug tracking (you're here!)
+                            <strong>What's New Page:</strong> Dedicated page for
+                            changelog and bug tracking (you're here!)
                           </div>
                         </li>
                       </ul>
@@ -2815,38 +2976,57 @@ if (!token) {
                     {/* Previous Version */}
                     <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-xl p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-gray-800">v2.0.0 - Core Features</h3>
-                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">January 2026</span>
+                        <h3 className="text-2xl font-bold text-gray-800">
+                          v2.0.0 - Core Features
+                        </h3>
+                        <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                          January 2026
+                        </span>
                       </div>
                       <ul className="space-y-3 text-gray-700">
                         <li className="flex items-start gap-3">
-                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Event Creation:</strong> Create and manage sports events with multiple images
+                            <strong>Event Creation:</strong> Create and manage
+                            sports events with multiple images
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Registration System:</strong> Register and unregister for events with capacity limits
+                            <strong>Registration System:</strong> Register and
+                            unregister for events with capacity limits
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Google Maps Integration:</strong> Location autocomplete and interactive map display
+                            <strong>Google Maps Integration:</strong> Location
+                            autocomplete and interactive map display
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Image Upload:</strong> Multiple images per event with Cloudinary hosting
+                            <strong>Image Upload:</strong> Multiple images per
+                            event with Cloudinary hosting
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">✅</span>
+                          <span className="text-blue-600 text-xl flex-shrink-0 mt-0.5">
+                            ✅
+                          </span>
                           <div>
-                            <strong>Sport Filtering:</strong> Filter events by sport type and search by keywords
+                            <strong>Sport Filtering:</strong> Filter events by
+                            sport type and search by keywords
                           </div>
                         </li>
                       </ul>
@@ -2854,24 +3034,35 @@ if (!token) {
 
                     {/* Future Plans */}
                     <div className="border-l-4 border-purple-500 bg-purple-50 rounded-r-xl p-6">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-4">🚀 Coming Soon</h3>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                        🚀 Coming Soon
+                      </h3>
                       <ul className="space-y-3 text-gray-700">
                         <li className="flex items-start gap-3">
-                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">
+                            🔜
+                          </span>
                           <div>
-                            <strong>Event Chat:</strong> Real-time messaging for event attendees
+                            <strong>Event Chat:</strong> Real-time messaging for
+                            event attendees
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">
+                            🔜
+                          </span>
                           <div>
-                            <strong>Notifications:</strong> Get notified about event updates and new events nearby
+                            <strong>Notifications:</strong> Get notified about
+                            event updates and new events nearby
                           </div>
                         </li>
                         <li className="flex items-start gap-3">
-                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">🔜</span>
+                          <span className="text-purple-600 text-xl flex-shrink-0 mt-0.5">
+                            🔜
+                          </span>
                           <div>
-                            <strong>User Profiles:</strong> Public profiles with event history and ratings
+                            <strong>User Profiles:</strong> Public profiles with
+                            event history and ratings
                           </div>
                         </li>
                       </ul>
@@ -2881,9 +3072,12 @@ if (!token) {
 
                 {/* Footer CTA */}
                 <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Have Feedback?</h3>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    Have Feedback?
+                  </h3>
                   <p className="text-gray-700 mb-4">
-                    We're constantly improving Gathr based on your feedback. Found a bug or have a feature request? Let us know!
+                    We're constantly improving Gathr based on your feedback.
+                    Found a bug or have a feature request? Let us know!
                   </p>
                   <button
                     onClick={() => setShowBugReportModal(true)}
@@ -2898,7 +3092,9 @@ if (!token) {
               /* BUGS TAB */
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-3xl font-bold text-gray-800">Bug Reports</h2>
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    Bug Reports
+                  </h2>
                   <button
                     onClick={() => setShowBugReportModal(true)}
                     className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all flex items-center gap-2"
@@ -2916,63 +3112,74 @@ if (!token) {
                         <h3 className="font-bold text-lg text-orange-800 flex items-center gap-2">
                           📋 Pending
                           <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm">
-                            {bugs.filter(b => b.status === 'pending').length}
+                            {bugs.filter((b) => b.status === "pending").length}
                           </span>
                         </h3>
                       </div>
                       <div className="space-y-4">
-                        {bugs.filter(b => b.status === 'pending').map((bug) => (
-                          <div
-                            key={bug._id}
-                            className="bg-white border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                            onClick={() => {
-                              setSelectedBug(bug);
-                              setShowBugDetailModal(true);
-                            }}
-                          >
-                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
-                              {bug.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
-                              {bug.description}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
-                              <span>•</span>
-                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                            </div>
-                            
-                            {/* Screenshot count indicator */}
-                            {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
-                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
+                        {bugs
+                          .filter((b) => b.status === "pending")
+                          .map((bug) => (
+                            <div
+                              key={bug._id}
+                              className="bg-white border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                              onClick={() => {
+                                setSelectedBug(bug);
+                                setShowBugDetailModal(true);
+                              }}
+                            >
+                              <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                                {bug.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
+                                {bug.description}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                                <span className="font-semibold">
+                                  {bug.userName || "Anonymous"}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {new Date(bug.timestamp).toLocaleDateString()}
+                                </span>
                               </div>
-                            )}
 
-                            <div className="flex gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedBug(bug);
-                                  setShowBugDetailModal(true);
-                                }}
-                                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
-                              >
-                                👁️ View Details
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBugStatusChange(bug._id, 'working');
-                                }}
-                                className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                              >
-                                🔨 Start Working
-                              </button>
+                              {/* Screenshot count indicator */}
+                              {bug.screenshots &&
+                                bug.screenshots.length > 0 && (
+                                  <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                    <span>
+                                      📸 {bug.screenshots.length} screenshot
+                                      {bug.screenshots.length > 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+                                )}
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedBug(bug);
+                                    setShowBugDetailModal(true);
+                                  }}
+                                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                                >
+                                  👁️ View Details
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBugStatusChange(bug._id, "working");
+                                  }}
+                                  className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                                >
+                                  🔨 Start Working
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                        {bugs.filter(b => b.status === 'pending').length === 0 && (
+                          ))}
+                        {bugs.filter((b) => b.status === "pending").length ===
+                          0 && (
                           <div className="text-center py-8 text-gray-400">
                             <p>No pending bugs</p>
                           </div>
@@ -2986,72 +3193,83 @@ if (!token) {
                         <h3 className="font-bold text-lg text-blue-800 flex items-center gap-2">
                           🔨 In Progress
                           <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-sm">
-                            {bugs.filter(b => b.status === 'working').length}
+                            {bugs.filter((b) => b.status === "working").length}
                           </span>
                         </h3>
                       </div>
                       <div className="space-y-4">
-                        {bugs.filter(b => b.status === 'working').map((bug) => (
-                          <div
-                            key={bug._id}
-                            className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                            onClick={() => {
-                              setSelectedBug(bug);
-                              setShowBugDetailModal(true);
-                            }}
-                          >
-                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
-                              {bug.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
-                              {bug.description}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
-                              <span>•</span>
-                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                            </div>
-                            
-                            {/* Screenshot count indicator */}
-                            {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
-                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
+                        {bugs
+                          .filter((b) => b.status === "working")
+                          .map((bug) => (
+                            <div
+                              key={bug._id}
+                              className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                              onClick={() => {
+                                setSelectedBug(bug);
+                                setShowBugDetailModal(true);
+                              }}
+                            >
+                              <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                                {bug.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap line-clamp-3">
+                                {bug.description}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                                <span className="font-semibold">
+                                  {bug.userName || "Anonymous"}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {new Date(bug.timestamp).toLocaleDateString()}
+                                </span>
                               </div>
-                            )}
 
-                            <div className="grid grid-cols-3 gap-2 mb-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedBug(bug);
-                                  setShowBugDetailModal(true);
-                                }}
-                                className="col-span-3 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
-                              >
-                                👁️ View Details
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBugStatusChange(bug._id, 'pending');
-                                }}
-                                className="bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
-                              >
-                                ⬅️ Back
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBugStatusChange(bug._id, 'resolved');
-                                }}
-                                className="col-span-2 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
-                              >
-                                ✅ Resolve
-                              </button>
+                              {/* Screenshot count indicator */}
+                              {bug.screenshots &&
+                                bug.screenshots.length > 0 && (
+                                  <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                    <span>
+                                      📸 {bug.screenshots.length} screenshot
+                                      {bug.screenshots.length > 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+                                )}
+
+                              <div className="grid grid-cols-3 gap-2 mb-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedBug(bug);
+                                    setShowBugDetailModal(true);
+                                  }}
+                                  className="col-span-3 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                                >
+                                  👁️ View Details
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBugStatusChange(bug._id, "pending");
+                                  }}
+                                  className="bg-orange-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-all"
+                                >
+                                  ⬅️ Back
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBugStatusChange(bug._id, "resolved");
+                                  }}
+                                  className="col-span-2 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition-all"
+                                >
+                                  ✅ Resolve
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                        {bugs.filter(b => b.status === 'working').length === 0 && (
+                          ))}
+                        {bugs.filter((b) => b.status === "working").length ===
+                          0 && (
                           <div className="text-center py-8 text-gray-400">
                             <p>No bugs in progress</p>
                           </div>
@@ -3065,63 +3283,74 @@ if (!token) {
                         <h3 className="font-bold text-lg text-green-800 flex items-center gap-2">
                           ✅ Resolved
                           <span className="bg-green-500 text-white px-2 py-1 rounded-full text-sm">
-                            {bugs.filter(b => b.status === 'resolved').length}
+                            {bugs.filter((b) => b.status === "resolved").length}
                           </span>
                         </h3>
                       </div>
                       <div className="space-y-4">
-                        {bugs.filter(b => b.status === 'resolved').map((bug) => (
-                          <div
-                            key={bug._id}
-                            className="bg-white border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-shadow opacity-75 hover:opacity-100 cursor-pointer"
-                            onClick={() => {
-                              setSelectedBug(bug);
-                              setShowBugDetailModal(true);
-                            }}
-                          >
-                            <h4 className="font-bold text-gray-800 mb-2 text-lg">
-                              {bug.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                              {bug.description}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                              <span className="font-semibold">{bug.userName || 'Anonymous'}</span>
-                              <span>•</span>
-                              <span>{new Date(bug.timestamp).toLocaleDateString()}</span>
-                            </div>
-                            
-                            {/* Screenshot count indicator */}
-                            {bug.screenshots && bug.screenshots.length > 0 && (
-                              <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
-                                <span>📸 {bug.screenshots.length} screenshot{bug.screenshots.length > 1 ? 's' : ''}</span>
+                        {bugs
+                          .filter((b) => b.status === "resolved")
+                          .map((bug) => (
+                            <div
+                              key={bug._id}
+                              className="bg-white border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-shadow opacity-75 hover:opacity-100 cursor-pointer"
+                              onClick={() => {
+                                setSelectedBug(bug);
+                                setShowBugDetailModal(true);
+                              }}
+                            >
+                              <h4 className="font-bold text-gray-800 mb-2 text-lg">
+                                {bug.title}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                {bug.description}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                                <span className="font-semibold">
+                                  {bug.userName || "Anonymous"}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {new Date(bug.timestamp).toLocaleDateString()}
+                                </span>
                               </div>
-                            )}
 
-                            <div className="flex gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedBug(bug);
-                                  setShowBugDetailModal(true);
-                                }}
-                                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
-                              >
-                                👁️ View Details
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBugStatusChange(bug._id, 'working');
-                                }}
-                                className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
-                              >
-                                🔄 Reopen
-                              </button>
+                              {/* Screenshot count indicator */}
+                              {bug.screenshots &&
+                                bug.screenshots.length > 0 && (
+                                  <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+                                    <span>
+                                      📸 {bug.screenshots.length} screenshot
+                                      {bug.screenshots.length > 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+                                )}
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedBug(bug);
+                                    setShowBugDetailModal(true);
+                                  }}
+                                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-all"
+                                >
+                                  👁️ View Details
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBugStatusChange(bug._id, "working");
+                                  }}
+                                  className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                                >
+                                  🔄 Reopen
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                        {bugs.filter(b => b.status === 'resolved').length === 0 && (
+                          ))}
+                        {bugs.filter((b) => b.status === "resolved").length ===
+                          0 && (
                           <div className="text-center py-8 text-gray-400">
                             <p>No resolved bugs yet</p>
                           </div>
@@ -3132,7 +3361,9 @@ if (!token) {
                 ) : (
                   <div className="text-center py-16">
                     <Bug size={80} className="mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-2xl font-bold text-gray-600 mb-2">No Bugs Reported</h3>
+                    <h3 className="text-2xl font-bold text-gray-600 mb-2">
+                      No Bugs Reported
+                    </h3>
                     <p className="text-gray-500 mb-6">
                       When users report bugs, they'll appear here for tracking.
                     </p>
@@ -3153,7 +3384,7 @@ if (!token) {
 
       {/* Bug Image Modal */}
       {selectedBugImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4"
           onClick={() => setSelectedBugImage(null)}
         >
@@ -3183,14 +3414,20 @@ if (!token) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <Bug size={24} />
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      selectedBug.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                      selectedBug.status === 'working' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {selectedBug.status === 'pending' ? '📋 Pending' :
-                       selectedBug.status === 'working' ? '🔨 In Progress' :
-                       '✅ Resolved'}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        selectedBug.status === "pending"
+                          ? "bg-orange-100 text-orange-800"
+                          : selectedBug.status === "working"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {selectedBug.status === "pending"
+                        ? "📋 Pending"
+                        : selectedBug.status === "working"
+                          ? "🔨 In Progress"
+                          : "✅ Resolved"}
                     </span>
                   </div>
                   <h2 className="text-2xl font-bold break-words">
@@ -3213,7 +3450,9 @@ if (!token) {
             <div className="p-6">
               {/* Bug Info */}
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-3">Description</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                  Description
+                </h3>
                 <p className="text-gray-700 whitespace-pre-wrap break-words">
                   {selectedBug.description}
                 </p>
@@ -3224,57 +3463,61 @@ if (!token) {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Reported By</p>
                   <p className="font-semibold text-gray-800">
-                    {selectedBug.userName || 'Anonymous'}
+                    {selectedBug.userName || "Anonymous"}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Date</p>
                   <p className="font-semibold text-gray-800">
-                    {new Date(selectedBug.timestamp).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
+                    {new Date(selectedBug.timestamp).toLocaleDateString(
+                      "en-US",
+                      {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      },
+                    )}
                   </p>
                 </div>
               </div>
 
               {/* Screenshots */}
-              {selectedBug.screenshots && selectedBug.screenshots.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-3">
-                    Screenshots ({selectedBug.screenshots.length})
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {selectedBug.screenshots.map((screenshot, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedBugImage(screenshot)}
-                        className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-orange-500 transition-all group relative"
-                      >
-                        <img
-                          src={screenshot}
-                          alt={`Screenshot ${idx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                          <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-semibold bg-black/70 px-3 py-2 rounded-lg">
-                            Click to Enlarge
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+              {selectedBug.screenshots &&
+                selectedBug.screenshots.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-3">
+                      Screenshots ({selectedBug.screenshots.length})
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {selectedBug.screenshots.map((screenshot, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedBugImage(screenshot)}
+                          className="aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-orange-500 transition-all group relative"
+                        >
+                          <img
+                            src={screenshot}
+                            alt={`Screenshot ${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-semibold bg-black/70 px-3 py-2 rounded-lg">
+                              Click to Enlarge
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t">
-                {selectedBug.status === 'pending' && (
+                {selectedBug.status === "pending" && (
                   <button
                     onClick={() => {
-                      handleBugStatusChange(selectedBug._id, 'working');
+                      handleBugStatusChange(selectedBug._id, "working");
                       setShowBugDetailModal(false);
                       setSelectedBug(null);
                     }}
@@ -3283,11 +3526,11 @@ if (!token) {
                     🔨 Start Working on This Bug
                   </button>
                 )}
-                {selectedBug.status === 'working' && (
+                {selectedBug.status === "working" && (
                   <>
                     <button
                       onClick={() => {
-                        handleBugStatusChange(selectedBug._id, 'pending');
+                        handleBugStatusChange(selectedBug._id, "pending");
                         setShowBugDetailModal(false);
                         setSelectedBug(null);
                       }}
@@ -3297,7 +3540,7 @@ if (!token) {
                     </button>
                     <button
                       onClick={() => {
-                        handleBugStatusChange(selectedBug._id, 'resolved');
+                        handleBugStatusChange(selectedBug._id, "resolved");
                         setShowBugDetailModal(false);
                         setSelectedBug(null);
                       }}
@@ -3307,10 +3550,10 @@ if (!token) {
                     </button>
                   </>
                 )}
-                {selectedBug.status === 'resolved' && (
+                {selectedBug.status === "resolved" && (
                   <button
                     onClick={() => {
-                      handleBugStatusChange(selectedBug._id, 'working');
+                      handleBugStatusChange(selectedBug._id, "working");
                       setShowBugDetailModal(false);
                       setSelectedBug(null);
                     }}
